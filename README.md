@@ -1,8 +1,8 @@
-# Chess Pal ♟️
+# PawnPals ♟️
 
 A chess tutor for iPhone that **grades your moves and explains why** — at a level that fits the player.
 
-There are plenty of places to *play* chess. Chess Pal is about *learning*: after each move it tells you whether it was great, good, an inaccuracy, a mistake, or a blunder, and gives a short, kid-friendly reason ("your knight on f3 isn't protected").
+There are plenty of places to *play* chess. PawnPals is about *learning*: after each move it tells you whether it was great, good, an inaccuracy, a mistake, or a blunder, and gives a short, kid-friendly reason ("your knight on f3 isn't protected").
 
 > Status: **design stage.** No app code yet. See [docs/DESIGN.md](docs/DESIGN.md).
 
@@ -38,4 +38,4 @@ See the step-by-step plan in [docs/DESIGN.md](docs/DESIGN.md#build-plan). Each s
 
 ## License
 
-GPL-3.0 — required because Chess Pal will ship with Stockfish (and later lc0), which are GPL-licensed. See [LICENSE](LICENSE).
+GPL-3.0 — required because PawnPals will ship with Stockfish (and later lc0), which are GPL-licensed. See [LICENSE](LICENSE).

@@ -1,4 +1,4 @@
-# Chess Pal — Design Doc
+# PawnPals — Design Doc
 
 Written in plain language on purpose: this project is also how we learn to code. Boxes marked **Why** explain the reasoning behind a choice.
 
