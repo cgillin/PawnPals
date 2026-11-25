@@ -5,15 +5,16 @@
 //  Created by Christopher Gillin on 11/25/26.
 //
 
+import PawnPalsCore
 import SwiftUI
 
 struct ContentView: View {
     var body: some View {
         VStack {
-            Image(systemName: "globe")
+            Image(systemName: "crown.fill")
                 .imageScale(.large)
                 .foregroundStyle(.tint)
-            Text("Hello, world!")
+            Text(Greeting.title).font(.largeTitle)
         }
         .padding()
     }
