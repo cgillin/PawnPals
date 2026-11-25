@@ -103,13 +103,28 @@ xcodebuild -project PawnPals.xcodeproj -scheme PawnPals -destination 'platform=i
 # Run app tests
 xcodebuild -project PawnPals.xcodeproj -scheme PawnPals -destination 'platform=iOS Simulator,name=iPhone 17' test
 
-# Format
+# Format (fixes files in place)
 swift format --in-place --recursive PawnPals PawnPalsCore
+
+# Lint (what CI runs; fails on any problem)
+git ls-files '*.swift' | xargs swift format lint --strict --configuration .swift-format
+
+# Turn on the pre-commit format check (once per clone)
+git config core.hooksPath .githooks
 ```
 
-## Git
+**Warnings are errors.** When step 0 creates the project, set `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` on the app target, and give `PawnPalsCore` targets `swiftSettings: [.treatAllWarnings(as: .error)]`. Don't silence a warning to get a build through; fix it.
 
-- One branch per build-plan step (`step-01-board`, `step-02-move-list`, …), merged to `main` when the step works.
+## Lint rules
+
+`.swift-format` is the style config: swift-format defaults, 4-space indentation, plus `NeverForceUnwrap`, `NeverUseForceTry`, and `NeverUseImplicitlyUnwrappedOptionals` turned on to enforce the optionals rule above. Change it only on purpose, in its own PR.
+
+## Git and pull requests
+
+- **`main` is protected. Never push to it directly.** Every change goes through a pull request, and the CI checks (Lint, Core tests, App build & test, Tests required) must pass before merging.
+- One branch per build-plan step (`step-01-board`, `step-02-move-list`, …), or per smaller change. Open a PR when the step works.
+- **PRs that change Swift code must change tests too.** CI fails otherwise. For a real exception (a rename, a UI-only tweak), add the `no-tests-needed` label and say why in the PR description.
+- PR descriptions say what changed, why, and how to see it working (simulator steps, or which tests to run).
 - Small commits with messages that say what changed and why.
 - Never commit secrets, `xcuserdata/`, or `DerivedData/` (already in `.gitignore`).
 - The repo is public and GPL-3.0 because we ship Stockfish. Don't add code with an incompatible license.
