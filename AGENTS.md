@@ -121,7 +121,8 @@ git config core.hooksPath .githooks
 
 ## Git and pull requests
 
-- **`main` is protected. Never push to it directly.** Every change goes through a pull request, and the CI checks (Lint, Core tests, App build & test, Tests required) must pass before merging.
+- **`main` is protected. Never push to it directly.** Every change goes through a pull request, and the CI checks (Lint, Build & test, Tests required) must pass before merging.
+- CI's lint job uses a pinned Swift container (`swift:6.4.2-noble` in `.github/workflows/ci.yml`). When we update Xcode, bump that tag to match `swift --version`, so formatting rules agree between CI and our machines.
 - One branch per build-plan step (`step-01-board`, `step-02-move-list`, …), or per smaller change. Open a PR when the step works.
 - **PRs that change Swift code must change tests too.** CI fails otherwise. For a real exception (a rename, a UI-only tweak), add the `no-tests-needed` label and say why in the PR description.
 - PR descriptions say what changed, why, and how to see it working (simulator steps, or which tests to run).

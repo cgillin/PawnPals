@@ -1,8 +1,11 @@
 # CI for PawnPals. Runs on every pull request and on pushes to main.
 #
-# The job names below ("Lint", "Core tests", "App build & test", "Tests required")
-# are the status checks the main-branch ruleset requires. If you rename a job,
-# update the ruleset too, or PRs will wait forever for a check that never reports.
+# The job names below ("Lint", "Build & test", "Tests required") are the status
+# checks the main-branch ruleset requires. If you rename a job, update the
+# ruleset too, or PRs will wait forever for a check that never reports.
+#
+# Only "Build & test" runs on macOS. Free macOS runners are shared and can queue
+# for minutes, so everything that doesn't need a Mac runs on Linux instead.
 
 name: CI
 
@@ -23,24 +26,25 @@ permissions:
 jobs:
   lint:
     name: Lint
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
+    # Pinned to the same Swift version as our Xcode, so swift-format behaves
+    # identically in CI and locally. Bump this when we update Xcode.
+    container: swift:6.4.2-noble
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use the newest Xcode on the runner
-        run: .github/scripts/select-xcode.sh
-
       - name: swift-format lint
         run: |
-          files=$(git ls-files '*.swift')
+          swift --version
+          files=$(find . -name '*.swift' -not -path './.build/*' -not -path '*/.build/*')
           if [ -z "$files" ]; then
             echo "No Swift files yet; nothing to lint."
             exit 0
           fi
           echo "$files" | xargs swift format lint --strict --configuration .swift-format
 
-  core-tests:
-    name: Core tests
+  build-and-test:
+    name: Build & test
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,7 +52,7 @@ jobs:
       - name: Use the newest Xcode on the runner
         run: .github/scripts/select-xcode.sh
 
-      - name: swift test (PawnPalsCore)
+      - name: Core tests (swift test on PawnPalsCore)
         run: |
           if [ ! -f PawnPalsCore/Package.swift ]; then
             echo "PawnPalsCore doesn't exist yet; skipping."
@@ -56,16 +60,7 @@ jobs:
           fi
           swift test --package-path PawnPalsCore
 
-  app:
-    name: App build & test
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Use the newest Xcode on the runner
-        run: .github/scripts/select-xcode.sh
-
-      - name: xcodebuild test (iPhone simulator)
+      - name: App build & test (xcodebuild on an iPhone simulator)
         run: |
           if [ ! -d PawnPals.xcodeproj ]; then
             echo "PawnPals.xcodeproj doesn't exist yet; skipping."
