@@ -126,6 +126,7 @@ git config core.hooksPath .githooks
 - One branch per build-plan step (`step-01-board`, `step-02-move-list`, …), or per smaller change. Open a PR when the step works.
 - **PRs that change Swift code must change tests too.** CI fails otherwise. For a real exception (a rename, a UI-only tweak), add the `no-tests-needed` label and say why in the PR description.
 - PR descriptions say what changed, why, and how to see it working (simulator steps, or which tests to run).
+- **Code review happens locally, before the PR.** Run `/code-review` **without `--fix`**, then present the findings: what's wrong, where, and how it would break, explained plainly. Wait for us to choose which to fix, skip, or fix differently. Don't apply review fixes without our approval, even when the fix looks obvious. List any skipped findings and the reason in the PR description.
 - Small commits with messages that say what changed and why.
 - Never commit secrets, `xcuserdata/`, or `DerivedData/` (already in `.gitignore`).
 - The repo is public and GPL-3.0 because we ship Stockfish. Don't add code with an incompatible license.
