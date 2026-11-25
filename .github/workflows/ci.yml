@@ -1,0 +1,98 @@
+# CI for PawnPals. Runs on every pull request and on pushes to main.
+#
+# The job names below ("Lint", "Build & test", "Tests required") are the status
+# checks the main-branch ruleset requires. If you rename a job, update the
+# ruleset too, or PRs will wait forever for a check that never reports.
+#
+# Only "Build & test" runs on macOS. Free macOS runners are shared and can queue
+# for minutes, so everything that doesn't need a Mac runs on Linux instead.
+
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [main]
+
+# A new push to the same PR cancels the older, now-pointless run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    # Pinned to the same Swift version as our Xcode, so swift-format behaves
+    # identically in CI and locally. Bump this when we update Xcode.
+    container: swift:6.4.2-noble
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: swift-format lint
+        run: |
+          swift --version
+          files=$(find . -name '*.swift' -not -path './.build/*' -not -path '*/.build/*')
+          if [ -z "$files" ]; then
+            echo "No Swift files yet; nothing to lint."
+            exit 0
+          fi
+          echo "$files" | xargs swift format lint --strict --configuration .swift-format
+
+  build-and-test:
+    name: Build & test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use the newest Xcode on the runner
+        run: .github/scripts/select-xcode.sh
+
+      - name: Core tests (swift test on PawnPalsCore)
+        run: |
+          if [ ! -f PawnPalsCore/Package.swift ]; then
+            echo "PawnPalsCore doesn't exist yet; skipping."
+            exit 0
+          fi
+          swift test --package-path PawnPalsCore
+
+      - name: App build & test (xcodebuild on an iPhone simulator)
+        run: |
+          if [ ! -d PawnPals.xcodeproj ]; then
+            echo "PawnPals.xcodeproj doesn't exist yet; skipping."
+            exit 0
+          fi
+          # Pick the first available iPhone simulator instead of hard-coding a model
+          # name, because runner images change which simulators they ship.
+          device_id=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
+          if [ -z "$device_id" ] || [ "$device_id" = "null" ]; then
+            echo "No iPhone simulator found on this runner." >&2
+            exit 1
+          fi
+          set -o pipefail
+          xcodebuild test \
+            -project PawnPals.xcodeproj \
+            -scheme PawnPals \
+            -destination "id=$device_id" \
+            CODE_SIGNING_ALLOWED=NO
+
+  tests-required:
+    name: Tests required
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check that code changes come with test changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SKIP_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'no-tests-needed') }}
+        run: .github/scripts/check-tests-included.sh
