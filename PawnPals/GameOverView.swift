@@ -23,7 +23,8 @@ struct GameOverView: View {
         .padding()
         .frame(maxWidth: .infinity)
         .background(.regularMaterial, in: .rect(cornerRadius: 16))
-        // VoiceOver keeps the title and detail together; the button stays separate.
+        // Groups the card as one container for VoiceOver (and gives UI tests one element
+        // to find). The title, detail, and button are still read one at a time.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("game-over")
     }

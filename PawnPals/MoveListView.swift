@@ -24,7 +24,8 @@ struct MoveListView: View {
                 }
                 .padding(.horizontal)
             }
-            .onChange(of: rows) {
+            // `initial: true` also scrolls when the list first appears with moves in it.
+            .onChange(of: rows, initial: true) {
                 if let last = rows.last {
                     withAnimation { scroller.scrollTo(last.number, anchor: .trailing) }
                 }
