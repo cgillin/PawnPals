@@ -50,7 +50,7 @@ struct BoardView: View {
         .padding()
 }
 
-#Preview("Flipped, Black at the bottom") {
+#Preview("Flip each turn, Black to move") {
     BoardView(model: flippedModel())
         .padding()
 }
@@ -72,8 +72,14 @@ private func knightSelectedModel() -> GameModel {
     return model
 }
 
+/// Flip each turn is on and White has played 1. e4, so the board faces Black.
 private func flippedModel() -> GameModel {
     let model = GameModel()
-    model.flipBoard()
+    model.flipsEachTurn = true
+    for name in ["e2", "e4"] {
+        if let square = BoardSquare(name: name) {
+            model.tap(square)
+        }
+    }
     return model
 }

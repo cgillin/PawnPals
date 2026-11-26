@@ -4,7 +4,7 @@ import Testing
 @testable import PawnPals
 
 // Tests for tapping the board (selecting, moving, deselecting) and for the
-// buttons around it (undo, flip, new game).
+// controls around it (undo, flip each turn, new game).
 // `@MainActor` because the app's code runs on the main thread by default.
 
 @MainActor
@@ -75,28 +75,63 @@ struct GameModelTests {
         #expect(model.selectedSquare == nil)
     }
 
-    @Test func flipBoardTurnsTheBoardAroundAndBack() {
-        let model = GameModel()
-        #expect(model.isBoardFlipped == false)
-
-        model.flipBoard()
-        #expect(model.isBoardFlipped == true)
-
-        model.flipBoard()
-        #expect(model.isBoardFlipped == false)
-    }
-
-    @Test func newGameSetsUpThePiecesButKeepsTheBoardFlipped() throws {
+    @Test func withFlipEachTurnOffWhiteStaysAtTheBottom() throws {
         let model = GameModel()
         model.tap(try square("e2"))
         model.tap(try square("e4"))
-        model.flipBoard()
+
+        #expect(model.game.sideToMove == .black)
+        #expect(model.isBoardFlipped == false)
+    }
+
+    @Test func withFlipEachTurnOnTheBoardFacesWhoeverMoves() throws {
+        let model = GameModel()
+        model.flipsEachTurn = true
+        #expect(model.isBoardFlipped == false)  // White to move
+
+        model.tap(try square("e2"))
+        model.tap(try square("e4"))
+        #expect(model.isBoardFlipped == true)  // Black to move
+
+        model.tap(try square("e7"))
+        model.tap(try square("e5"))
+        #expect(model.isBoardFlipped == false)  // White to move again
+    }
+
+    @Test func turningFlipEachTurnOnDuringBlacksTurnFacesBlackRightAway() throws {
+        let model = GameModel()
+        model.tap(try square("e2"))
+        model.tap(try square("e4"))
+
+        model.flipsEachTurn = true
+        #expect(model.isBoardFlipped == true)
+
+        model.flipsEachTurn = false
+        #expect(model.isBoardFlipped == false)
+    }
+
+    @Test func undoTurnsTheBoardBackToThePlayerWhoseMoveItIsAgain() throws {
+        let model = GameModel()
+        model.flipsEachTurn = true
+        model.tap(try square("e2"))
+        model.tap(try square("e4"))
+
+        model.undo()
+        #expect(model.isBoardFlipped == false)
+    }
+
+    @Test func newGameSetsUpThePiecesAndKeepsFlipEachTurnOn() throws {
+        let model = GameModel()
+        model.flipsEachTurn = true
+        model.tap(try square("e2"))
+        model.tap(try square("e4"))
 
         model.startNewGame()
 
         #expect(model.game.moveHistory.isEmpty)
         #expect(model.game.piece(at: try square("e2")) == ChessPiece(.pawn, .white))
-        #expect(model.isBoardFlipped == true)
+        #expect(model.flipsEachTurn == true)
+        #expect(model.isBoardFlipped == false)  // A new game starts with White to move.
     }
 
     private func square(_ name: String) throws -> BoardSquare {

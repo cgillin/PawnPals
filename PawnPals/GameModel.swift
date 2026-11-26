@@ -2,7 +2,7 @@ import Observation
 import PawnPalsCore
 
 /// The game on screen, plus which square the player has tapped
-/// and which way round the board is drawn.
+/// and whether the board turns to face whoever's move it is.
 ///
 /// `@Observable` means SwiftUI redraws any view that reads these properties
 /// whenever they change, so the board updates by itself after every tap.
@@ -10,8 +10,18 @@ import PawnPalsCore
 final class GameModel {
     private(set) var game: ChessGame
     private(set) var selectedSquare: BoardSquare?
-    /// When true, the board is drawn with Black at the bottom.
-    private(set) var isBoardFlipped = false
+    /// When on, the board turns after every move so whoever's turn it is sees it
+    /// from their side. When off, White is always at the bottom.
+    var flipsEachTurn = false
+
+    /// True when the board is drawn with Black at the bottom.
+    ///
+    /// This is worked out each time rather than stored, so it's always right:
+    /// after a move, after undo, after a new game, or when the setting is switched
+    /// on halfway through a game.
+    var isBoardFlipped: Bool {
+        flipsEachTurn && game.sideToMove == .black
+    }
 
     init(game: ChessGame = ChessGame()) {
         self.game = game
@@ -46,13 +56,8 @@ final class GameModel {
         selectedSquare = nil
     }
 
-    /// Turns the board around, so the other player sees it from their side.
-    func flipBoard() {
-        isBoardFlipped.toggle()
-    }
-
     /// Throws away this game and sets up the pieces again.
-    /// The board stays the way round it was.
+    /// The flip-each-turn setting stays as it was.
     func startNewGame() {
         game = ChessGame()
         selectedSquare = nil
