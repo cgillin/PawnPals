@@ -34,15 +34,17 @@ struct ContentView: View {
 
             BoardView(model: model)
 
-            MoveListView(rows: model.game.moveListRows)
+            // The moves, with the small undo and flip buttons tucked in at the right.
+            HStack {
+                MoveListView(rows: model.game.moveListRows)
+                GameControlsView(model: model)
+            }
 
             if let outcome = model.game.outcome {
                 GameOverView(outcome: outcome) {
                     model.startNewGame()
                 }
             }
-
-            GameControlsView(model: model)
 
             // Pushes everything up, so the board stays put when the game-over card appears.
             Spacer(minLength: 0)
