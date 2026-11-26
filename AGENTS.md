@@ -66,6 +66,7 @@ docs/
 - Keep views small. If a `body` scrolls off the screen, extract a subview.
 - Every view gets a `#Preview` with realistic sample data, so it can be checked without running the app.
 - Use SF Symbols for icons and system fonts and colors, so Dynamic Type and dark mode work for free.
+  - **Exception: the board.** Square colors are fixed (a chessboard looks the same in light and dark mode), and piece symbols scale with the square, not with Dynamic Type. Text around the board still follows the rule.
 - Give board squares and pieces VoiceOver labels ("white knight on f3").
 
 **SwiftData**

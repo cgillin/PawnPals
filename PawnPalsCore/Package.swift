@@ -23,7 +23,12 @@ let package = Package(
     ],
     dependencies: [
         // Chess rules: legal moves, check, checkmate, FEN. The referee for every move.
-        .package(url: "https://github.com/chesskit-app/chesskit-swift", from: "0.17.0")
+        // ChessKit is still 0.x, where minor releases can change its API, so we only
+        // accept 0.17.x bug fixes. Move to 0.18 on purpose, in its own PR.
+        .package(
+            url: "https://github.com/chesskit-app/chesskit-swift",
+            .upToNextMinor(from: "0.17.0")
+        )
     ],
     targets: [
         .target(

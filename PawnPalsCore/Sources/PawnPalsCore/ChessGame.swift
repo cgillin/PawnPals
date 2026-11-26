@@ -28,6 +28,15 @@ public struct ChessGame: Sendable {
         Self.side(from: board.position.sideToMove)
     }
 
+    /// How the game ended, or nil while it's still being played.
+    public var outcome: GameOutcome? {
+        switch board.state {
+        case .checkmate(let loser): .checkmate(winner: Self.side(from: loser).opponent)
+        case .draw: .draw
+        case .active, .check, .promotion: nil
+        }
+    }
+
     /// The piece on a square, or nil if it's empty.
     public func piece(at square: BoardSquare) -> ChessPiece? {
         board.position.piece(at: Self.chessKitSquare(square)).map(Self.piece(from:))
@@ -35,10 +44,12 @@ public struct ChessGame: Sendable {
 
     /// The squares the piece on `square` can legally move to right now.
     ///
-    /// Empty if the square is empty, the piece belongs to the player who isn't
-    /// on move, or the piece has no legal moves (for example, it's pinned).
+    /// Empty if the game is over, the square is empty, the piece belongs to the
+    /// player who isn't on move, or the piece has no legal moves (for example, it's pinned).
     public func legalDestinations(from square: BoardSquare) -> Set<BoardSquare> {
-        guard let piece = piece(at: square), piece.side == sideToMove else { return [] }
+        guard outcome == nil, let piece = piece(at: square), piece.side == sideToMove else {
+            return []
+        }
         let destinations = board.legalMoves(forPieceAt: Self.chessKitSquare(square))
         return Set(destinations.compactMap { BoardSquare(name: $0.notation) })
     }

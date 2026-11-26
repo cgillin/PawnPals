@@ -76,6 +76,59 @@ import Testing
     #expect(game.sideToMove == .black)
 }
 
+@Test func kingCanCastleAndTheRookJumpsOver() throws {
+    var game = try #require(ChessGame(fen: "4k3/8/8/8/8/8/8/4K2R w K - 0 1"))
+    let e1 = try #require(BoardSquare(name: "e1"))
+    let g1 = try #require(BoardSquare(name: "g1"))
+
+    #expect(game.legalDestinations(from: e1).contains(g1))
+    #expect(game.move(from: e1, to: g1) == true)
+    #expect(game.piece(at: g1) == ChessPiece(.king, .white))
+    #expect(game.piece(at: try #require(BoardSquare(name: "f1"))) == ChessPiece(.rook, .white))
+    #expect(game.piece(at: try #require(BoardSquare(name: "h1"))) == nil)
+}
+
+@Test func pawnCanCaptureEnPassant() throws {
+    // White pawn on e5. Black pushes d7-d5 right past it, so White may capture
+    // "in passing" by moving to d6, and the black pawn on d5 disappears.
+    var game = try #require(ChessGame(fen: "4k3/3p4/8/4P3/8/8/8/4K3 b - - 0 1"))
+    let d5 = try #require(BoardSquare(name: "d5"))
+    let d6 = try #require(BoardSquare(name: "d6"))
+    let e5 = try #require(BoardSquare(name: "e5"))
+
+    #expect(game.move(from: try #require(BoardSquare(name: "d7")), to: d5) == true)
+    #expect(game.legalDestinations(from: e5).contains(d6))
+    #expect(game.move(from: e5, to: d6) == true)
+    #expect(game.piece(at: d6) == ChessPiece(.pawn, .white))
+    #expect(game.piece(at: d5) == nil)
+}
+
+@Test func checkmateEndsTheGame() throws {
+    // Fool's mate: the fastest checkmate there is. 1. f3 e5 2. g4 Qh4#
+    var game = ChessGame()
+    let moves = [("f2", "f3"), ("e7", "e5"), ("g2", "g4"), ("d8", "h4")]
+    for (from, to) in moves {
+        let moved = game.move(
+            from: try #require(BoardSquare(name: from)), to: try #require(BoardSquare(name: to)))
+        #expect(moved == true)
+    }
+
+    #expect(game.outcome == .checkmate(winner: .black))
+    #expect(game.legalDestinations(from: try #require(BoardSquare(name: "a2"))).isEmpty)
+}
+
+@Test func drawnGameAllowsNoMoreMoves() throws {
+    // Just two kings: neither side can ever checkmate, so the game is a draw.
+    let game = try #require(ChessGame(fen: "8/8/8/4k3/8/8/8/4K3 w - - 0 1"))
+
+    #expect(game.outcome == .draw)
+    #expect(game.legalDestinations(from: try #require(BoardSquare(name: "e1"))).isEmpty)
+}
+
+@Test func gameInProgressHasNoOutcome() {
+    #expect(ChessGame().outcome == nil)
+}
+
 @Test func invalidFENIsRejected() {
     #expect(ChessGame(fen: "not a chess position") == nil)
 }

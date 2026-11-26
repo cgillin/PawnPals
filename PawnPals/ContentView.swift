@@ -23,13 +23,23 @@ struct ContentView: View {
             }
             .font(.title)
 
-            Text(model.game.sideToMove == .white ? "White to move" : "Black to move")
+            Text(statusText)
                 .font(.headline)
                 .accessibilityIdentifier("turn-label")
 
             BoardView(model: model)
         }
         .padding()
+    }
+
+    /// Whose turn it is, or how the game ended.
+    private var statusText: String {
+        switch model.game.outcome {
+        case .checkmate(winner: .white): "Checkmate! White wins"
+        case .checkmate(winner: .black): "Checkmate! Black wins"
+        case .draw: "It's a draw"
+        case nil: model.game.sideToMove == .white ? "White to move" : "Black to move"
+        }
     }
 }
 

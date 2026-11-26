@@ -11,6 +11,14 @@ public enum Side: Sendable {
     }
 }
 
+/// How a finished game ended.
+public enum GameOutcome: Equatable, Sendable {
+    /// One side checkmated the other.
+    case checkmate(winner: Side)
+    /// Nobody won: stalemate, repetition, the fifty-move rule, or not enough pieces to mate.
+    case draw
+}
+
 /// A chess piece: what kind it is and whose it is.
 public struct ChessPiece: Hashable, Sendable {
     public enum Kind: Sendable, CaseIterable {
