@@ -121,7 +121,7 @@ import Testing
     // Just two kings: neither side can ever checkmate, so the game is a draw.
     let game = try #require(ChessGame(fen: "8/8/8/4k3/8/8/8/4K3 w - - 0 1"))
 
-    #expect(game.outcome == .draw)
+    #expect(game.outcome == .draw(.insufficientMaterial))
     #expect(game.legalDestinations(from: try #require(BoardSquare(name: "e1"))).isEmpty)
 }
 
