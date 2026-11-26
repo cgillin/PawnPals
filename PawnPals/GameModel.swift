@@ -1,7 +1,8 @@
 import Observation
 import PawnPalsCore
 
-/// The game on screen, plus which square the player has tapped.
+/// The game on screen, plus which square the player has tapped
+/// and which way round the board is drawn.
 ///
 /// `@Observable` means SwiftUI redraws any view that reads these properties
 /// whenever they change, so the board updates by itself after every tap.
@@ -9,6 +10,8 @@ import PawnPalsCore
 final class GameModel {
     private(set) var game: ChessGame
     private(set) var selectedSquare: BoardSquare?
+    /// When true, the board is drawn with Black at the bottom.
+    private(set) var isBoardFlipped = false
 
     init(game: ChessGame = ChessGame()) {
         self.game = game
@@ -34,5 +37,24 @@ final class GameModel {
         } else {
             selectedSquare = nil
         }
+    }
+
+    /// Takes back the last move.
+    func undo() {
+        game.undo()
+        // The selected piece may belong to the wrong player now, so start fresh.
+        selectedSquare = nil
+    }
+
+    /// Turns the board around, so the other player sees it from their side.
+    func flipBoard() {
+        isBoardFlipped.toggle()
+    }
+
+    /// Throws away this game and sets up the pieces again.
+    /// The board stays the way round it was.
+    func startNewGame() {
+        game = ChessGame()
+        selectedSquare = nil
     }
 }

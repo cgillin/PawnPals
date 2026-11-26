@@ -1,19 +1,22 @@
 import PawnPalsCore
 import SwiftUI
 
-/// The 8×8 board. Rank 8 is at the top and rank 1 at the bottom,
-/// so White plays up the screen.
+/// The 8×8 board. Normally rank 8 is at the top and rank 1 at the bottom,
+/// so White plays up the screen. Flipped, it's the other way round and Black plays up.
 struct BoardView: View {
     let model: GameModel
 
     var body: some View {
         // Work out the selected piece's moves once per redraw, not once per square.
         let highlighted = model.highlightedSquares
+        // Top row first, left column first. Flipping reverses both, like turning the board around.
+        let ranks: [Int] = model.isBoardFlipped ? Array(0..<8) : Array((0..<8).reversed())
+        let files: [Int] = model.isBoardFlipped ? Array((0..<8).reversed()) : Array(0..<8)
 
         VStack(spacing: 0) {
-            ForEach((0..<8).reversed(), id: \.self) { rank in
+            ForEach(ranks, id: \.self) { rank in
                 HStack(spacing: 0) {
-                    ForEach(0..<8, id: \.self) { file in
+                    ForEach(files, id: \.self) { file in
                         if let square = BoardSquare(file: file, rank: rank) {
                             squareButton(for: square, isHighlighted: highlighted.contains(square))
                         }
@@ -47,6 +50,11 @@ struct BoardView: View {
         .padding()
 }
 
+#Preview("Flipped, Black at the bottom") {
+    BoardView(model: flippedModel())
+        .padding()
+}
+
 #Preview("Knight selected") {
     BoardView(model: knightSelectedModel())
         .padding()
@@ -61,5 +69,11 @@ private func knightSelectedModel() -> GameModel {
             model.tap(square)
         }
     }
+    return model
+}
+
+private func flippedModel() -> GameModel {
+    let model = GameModel()
+    model.flipBoard()
     return model
 }

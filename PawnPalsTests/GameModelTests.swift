@@ -3,7 +3,8 @@ import Testing
 
 @testable import PawnPals
 
-// Tests for tapping the board: selecting, moving, and deselecting.
+// Tests for tapping the board (selecting, moving, deselecting) and for the
+// buttons around it (undo, flip, new game).
 // `@MainActor` because the app's code runs on the main thread by default.
 
 @MainActor
@@ -59,6 +60,43 @@ struct GameModelTests {
         #expect(model.selectedSquare == nil)
         #expect(model.game.piece(at: try square("e2")) == ChessPiece(.pawn, .white))
         #expect(model.game.sideToMove == .white)
+    }
+
+    @Test func undoTakesBackTheMoveAndClearsTheSelection() throws {
+        let model = GameModel()
+        model.tap(try square("e2"))
+        model.tap(try square("e4"))
+        model.tap(try square("e7"))  // Black selects a pawn, then White's move is undone.
+
+        model.undo()
+
+        #expect(model.game.piece(at: try square("e2")) == ChessPiece(.pawn, .white))
+        #expect(model.game.sideToMove == .white)
+        #expect(model.selectedSquare == nil)
+    }
+
+    @Test func flipBoardTurnsTheBoardAroundAndBack() {
+        let model = GameModel()
+        #expect(model.isBoardFlipped == false)
+
+        model.flipBoard()
+        #expect(model.isBoardFlipped == true)
+
+        model.flipBoard()
+        #expect(model.isBoardFlipped == false)
+    }
+
+    @Test func newGameSetsUpThePiecesButKeepsTheBoardFlipped() throws {
+        let model = GameModel()
+        model.tap(try square("e2"))
+        model.tap(try square("e4"))
+        model.flipBoard()
+
+        model.startNewGame()
+
+        #expect(model.game.moveHistory.isEmpty)
+        #expect(model.game.piece(at: try square("e2")) == ChessPiece(.pawn, .white))
+        #expect(model.isBoardFlipped == true)
     }
 
     private func square(_ name: String) throws -> BoardSquare {

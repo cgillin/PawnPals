@@ -10,7 +10,12 @@ import SwiftUI
 
 struct ContentView: View {
     /// `@State` keeps the same game alive while the screen redraws.
-    @State private var model = GameModel()
+    @State private var model: GameModel
+
+    /// Previews pass in a game that's already under way; the app starts a new one.
+    init(model: GameModel = GameModel()) {
+        _model = State(initialValue: model)
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -28,21 +33,45 @@ struct ContentView: View {
                 .accessibilityIdentifier("turn-label")
 
             BoardView(model: model)
+
+            MoveListView(rows: model.game.moveListRows)
+
+            if let outcome = model.game.outcome {
+                GameOverView(outcome: outcome) {
+                    model.startNewGame()
+                }
+            }
+
+            GameControlsView(model: model)
+
+            // Pushes everything up, so the board stays put when the game-over card appears.
+            Spacer(minLength: 0)
         }
         .padding()
     }
 
-    /// Whose turn it is, or how the game ended.
+    /// Whose turn it is, or "Game over".
     private var statusText: String {
-        switch model.game.outcome {
-        case .checkmate(winner: .white): "Checkmate! White wins"
-        case .checkmate(winner: .black): "Checkmate! Black wins"
-        case .draw: "It's a draw"
-        case nil: model.game.sideToMove == .white ? "White to move" : "Black to move"
-        }
+        if model.game.outcome != nil { return "Game over" }
+        return model.game.sideToMove == .white ? "White to move" : "Black to move"
     }
 }
 
-#Preview {
+#Preview("New game") {
     ContentView()
+}
+
+#Preview("Checkmate") {
+    ContentView(model: foolsMateModel())
+}
+
+/// The fastest checkmate there is: 1. f3 e5 2. g4 Qh4#
+private func foolsMateModel() -> GameModel {
+    let model = GameModel()
+    for name in ["f2", "f3", "e7", "e5", "g2", "g4", "d8", "h4"] {
+        if let square = BoardSquare(name: name) {
+            model.tap(square)
+        }
+    }
+    return model
 }
