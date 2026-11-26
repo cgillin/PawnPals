@@ -22,14 +22,16 @@ final class PawnPalsUITests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
+    /// Launches the app and checks the welcome title from PawnPalsCore is on screen.
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testWelcomeScreenShowsTitle() throws {
         let app = XCUIApplication()
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
+        let title = app.staticTexts["Hello Chess ♞"]
+        XCTAssertTrue(
+            title.waitForExistence(timeout: 5),
+            "The welcome title should appear after launch."
+        )
     }
 }

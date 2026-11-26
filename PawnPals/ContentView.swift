@@ -14,6 +14,8 @@ struct ContentView: View {
             Image(systemName: "crown.fill")
                 .imageScale(.large)
                 .foregroundStyle(.tint)
+                // Decorative only, so VoiceOver skips it and reads the title.
+                .accessibilityHidden(true)
             Text(Greeting.title).font(.largeTitle)
         }
         .padding()

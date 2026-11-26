@@ -134,6 +134,7 @@ CI doesn't use `iPhone 17`; it picks the first available iPhone simulator on the
 ## Git and pull requests
 
 - **`main` is protected. Never push to it directly.** Every change goes through a pull request, and the CI checks (Lint, Build & test, Tests required) must pass before merging.
+- CI's Build & test job runs on the `xcode-27` runner label (GitHub names Mac images by Xcode version). Our project format needs Xcode 27, so bump the label when we move to a new Xcode.
 - CI's lint job uses a pinned Swift container (`swift:6.4.2-noble` in `.github/workflows/ci.yml`). When we update Xcode, bump that tag to match `swift --version`, so formatting rules agree between CI and our machines.
 - One branch per build-plan step (`step-01-board`, `step-02-move-list`, …), or per smaller change. Open a PR when the step works.
 - **PRs that change Swift code must change tests too.** CI fails otherwise. For a real exception (a rename, a UI-only tweak), add the `no-tests-needed` label and say why in the PR description.

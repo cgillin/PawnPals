@@ -4,7 +4,7 @@
 # checks the main-branch ruleset requires. If you rename a job, update the
 # ruleset too, or PRs will wait forever for a check that never reports.
 #
-# Only "Build & test" runs on macOS. Free macOS runners are shared and can queue
+# Only "Build & test" runs on macOS (the xcode-27 image). Free macOS runners are shared and can queue
 # for minutes, so everything that doesn't need a Mac runs on Linux instead.
 
 name: CI
@@ -45,7 +45,9 @@ jobs:
 
   build-and-test:
     name: Build & test
-    runs-on: macos-latest
+    # Xcode 27 is needed to open our project format (project.xcproj). GitHub keys
+    # Mac images by Xcode version, so bump this label when we move to a new Xcode.
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v4
 
