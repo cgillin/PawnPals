@@ -22,16 +22,25 @@ final class PawnPalsUITests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    /// Launches the app and checks the welcome title from PawnPalsCore is on screen.
+    /// Launches the app, checks the title and board appear, then plays 1. e4 by tapping.
     @MainActor
-    func testWelcomeScreenShowsTitle() throws {
+    func testPlayingTheFirstMoveByTapping() throws {
         let app = XCUIApplication()
         app.launch()
 
-        let title = app.staticTexts["Hello Chess ♞"]
         XCTAssertTrue(
-            title.waitForExistence(timeout: 5),
+            app.staticTexts["Hello Chess ♞"].waitForExistence(timeout: 5),
             "The welcome title should appear after launch."
         )
+        let turnLabel = app.staticTexts["turn-label"]
+        XCTAssertEqual(turnLabel.label, "White to move")
+
+        // Tap the e2 pawn, then the e4 square.
+        app.buttons["square-e2"].tap()
+        app.buttons["square-e4"].tap()
+
+        XCTAssertEqual(app.buttons["square-e4"].label, "e4, white pawn")
+        XCTAssertEqual(app.buttons["square-e2"].label, "e2, empty")
+        XCTAssertEqual(turnLabel.label, "Black to move")
     }
 }
