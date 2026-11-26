@@ -28,19 +28,34 @@ struct ContentView: View {
             }
             .font(.title)
 
-            Text(statusText)
-                .font(.headline)
-                .accessibilityIdentifier("turn-label")
+            // The banner and the turn line share one spot. The minimum height fits
+            // the banner, so the board doesn't jump when switching between them.
+            Group {
+                if let viewedMove {
+                    ViewingEarlierMoveBanner(moveNumber: viewedMove.number, san: viewedMove.san) {
+                        model.returnToCurrentMove()
+                    }
+                } else {
+                    Text(statusText)
+                        .font(.headline)
+                        .accessibilityIdentifier("turn-label")
+                }
+            }
+            .frame(minHeight: 36)
 
             BoardView(model: model)
 
             // The moves, with the small undo and flip buttons tucked in at the right.
             HStack {
-                MoveListView(rows: model.game.moveListRows)
+                MoveListView(
+                    rows: model.game.moveListRows,
+                    highlightedMoveIndex: model.highlightedMoveIndex,
+                    selectMove: model.viewMove(at:))
                 GameControlsView(model: model)
             }
 
-            if let outcome = model.game.outcome {
+            // Hidden while looking back, so the card doesn't cover up the past.
+            if let outcome = model.game.outcome, !model.isViewingEarlierMove {
                 GameOverView(outcome: outcome) {
                     model.startNewGame()
                 }
@@ -50,6 +65,17 @@ struct ContentView: View {
             Spacer(minLength: 0)
         }
         .padding()
+    }
+
+    /// The move being looked back at, split into its number ("2." for White,
+    /// "2…" for Black) and its notation, or nil when the board shows the game as it is now.
+    private var viewedMove: (number: String, san: String)? {
+        guard let index = model.viewedMoveIndex else { return nil }
+        for row in model.game.moveListRows {
+            if let white = row.white, white.index == index { return ("\(row.number).", white.san) }
+            if let black = row.black, black.index == index { return ("\(row.number)…", black.san) }
+        }
+        return nil
     }
 
     /// Whose turn it is, or "Game over".

@@ -43,7 +43,7 @@ final class PawnPalsUITests: XCTestCase {
         XCTAssertEqual(app.buttons["square-e4"].label, "e4, white pawn")
         XCTAssertEqual(app.buttons["square-e2"].label, "e2, empty")
         XCTAssertEqual(turnLabel.label, "Black to move")
-        XCTAssertEqual(app.otherElements["move-list"].value as? String, "1. e4")
+        XCTAssertEqual(app.buttons["move-0"].label, "Move 1, White: e4")
 
         // Take the move back.
         app.buttons["undo-button"].tap()

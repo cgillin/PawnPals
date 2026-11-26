@@ -51,8 +51,9 @@ import Testing
     try play(&game, ("e2", "e4"), ("e7", "e5"), ("g1", "f3"))
     #expect(
         game.moveListRows == [
-            MoveListRow(number: 1, white: "e4", black: "e5"),
-            MoveListRow(number: 2, white: "Nf3", black: nil),
+            MoveListRow(
+                number: 1, white: .init(index: 0, san: "e4"), black: .init(index: 1, san: "e5")),
+            MoveListRow(number: 2, white: .init(index: 2, san: "Nf3"), black: nil),
         ])
 }
 
@@ -62,9 +63,57 @@ import Testing
     try play(&game, ("d7", "d5"), ("e5", "d6"))
     #expect(
         game.moveListRows == [
-            MoveListRow(number: 1, white: nil, black: "d5"),
-            MoveListRow(number: 2, white: "exd6", black: nil),
+            MoveListRow(number: 1, white: nil, black: .init(index: 0, san: "d5")),
+            MoveListRow(number: 2, white: .init(index: 1, san: "exd6"), black: nil),
         ])
+}
+
+// MARK: - Looking back at earlier moves
+
+@Test func lastMoveRemembersWhereThePieceWentFromAndTo() throws {
+    var game = ChessGame()
+    #expect(game.lastMove == nil)
+
+    try play(&game, ("g1", "f3"))
+    #expect(game.lastMove == MoveSquares(from: try square("g1"), to: try square("f3")))
+}
+
+@Test func lookingBackShowsTheBoardRightAfterThatMove() throws {
+    var game = ChessGame()
+    try play(&game, ("e2", "e4"), ("e7", "e5"), ("g1", "f3"))
+
+    let afterFirstMove = try #require(game.game(afterMoveAt: 0))
+    #expect(afterFirstMove.piece(at: try square("e4")) == ChessPiece(.pawn, .white))
+    #expect(afterFirstMove.piece(at: try square("e5")) == nil)  // Black hasn't replied yet.
+    #expect(afterFirstMove.sideToMove == .black)
+    #expect(afterFirstMove.moveHistory == ["e4"])
+    #expect(afterFirstMove.lastMove == MoveSquares(from: try square("e2"), to: try square("e4")))
+}
+
+@Test func lookingBackAtTheLatestMoveShowsTheCurrentBoard() throws {
+    var game = ChessGame()
+    try play(&game, ("e2", "e4"), ("e7", "e5"))
+
+    let latest = try #require(game.game(afterMoveAt: 1))
+    #expect(latest.piece(at: try square("e5")) == ChessPiece(.pawn, .black))
+    #expect(latest.sideToMove == .white)
+}
+
+@Test func lookingBackDoesNotChangeTheRealGame() throws {
+    var game = ChessGame()
+    try play(&game, ("e2", "e4"), ("e7", "e5"))
+
+    _ = game.game(afterMoveAt: 0)
+    #expect(game.moveHistory == ["e4", "e5"])
+    #expect(game.piece(at: try square("e5")) == ChessPiece(.pawn, .black))
+}
+
+@Test func lookingBackAtAMoveThatWasNeverPlayedGivesNothing() throws {
+    var game = ChessGame()
+    try play(&game, ("e2", "e4"))
+
+    #expect(game.game(afterMoveAt: 1) == nil)
+    #expect(game.game(afterMoveAt: -1) == nil)
 }
 
 // MARK: - Undo

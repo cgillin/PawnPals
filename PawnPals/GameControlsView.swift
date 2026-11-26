@@ -9,26 +9,59 @@ struct GameControlsView: View {
     @Bindable var model: GameModel
 
     var body: some View {
-        HStack(spacing: 8) {
-            Button("Undo", systemImage: "arrow.uturn.backward") {
+        HStack(spacing: 0) {
+            Button {
                 model.undo()
+            } label: {
+                // Dark when you can undo, faint when you can't, so the difference is clear.
+                IconButtonLabel(
+                    systemImage: "arrow.uturn.backward",
+                    color: model.canUndo ? AnyShapeStyle(.primary) : AnyShapeStyle(.tertiary),
+                    background: .fill.tertiary)
             }
-            .tint(.secondary)
-            .disabled(!model.game.canUndo)
+            .disabled(!model.canUndo)
+            .accessibilityLabel("Undo")
             .accessibilityIdentifier("undo-button")
 
-            // `.button` style draws the toggle as a button that's tinted while it's on.
-            Toggle("Flip Each Turn", systemImage: "arrow.up.arrow.down", isOn: $model.flipsEachTurn)
-                .toggleStyle(.button)
-                // Grey while off, blue while on, so you can see at a glance that it's on.
-                .tint(model.flipsEachTurn ? .accentColor : .secondary)
-                .accessibilityIdentifier("flip-toggle")
+            Toggle(isOn: $model.flipsEachTurn) {
+                // Blue while on, grey while off, so you can see at a glance that it's on.
+                IconButtonLabel(
+                    systemImage: "arrow.up.arrow.down",
+                    color: model.flipsEachTurn
+                        ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.secondary),
+                    background: model.flipsEachTurn
+                        ? AnyShapeStyle(Color.accentColor.opacity(0.15))
+                        : AnyShapeStyle(.fill.tertiary))
+            }
+            .toggleStyle(.button)
+            .accessibilityLabel("Flip Each Turn")
+            .accessibilityIdentifier("flip-toggle")
         }
-        // Icons only on screen. The text is still there for VoiceOver,
-        // which reads "Undo" and "Flip Each Turn".
-        .labelStyle(.iconOnly)
-        .buttonStyle(.bordered)
-        .controlSize(.small)
+        // We draw our own look, so the button style shouldn't add another.
+        .buttonStyle(.plain)
+    }
+}
+
+/// An icon on a small circle, inside a larger invisible square that catches taps.
+///
+/// Apple recommends tap targets of at least 44 points. The circle is drawn smaller
+/// so the buttons stay quiet, but a tap anywhere in the 44-point square counts.
+private struct IconButtonLabel<Background: ShapeStyle>: View {
+    let systemImage: String
+    let color: AnyShapeStyle
+    let background: Background
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.subheadline.weight(.semibold))
+            // The circle is a fixed size, so stop the icon growing past it at the
+            // largest text sizes. VoiceOver still reads the button's name.
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+            .foregroundStyle(color)
+            .frame(width: 32, height: 32)
+            .background(background, in: .circle)
+            .frame(width: 44, height: 44)
+            .contentShape(.rect)
     }
 }
 

@@ -134,6 +134,80 @@ struct GameModelTests {
         #expect(model.isBoardFlipped == false)  // A new game starts with White to move.
     }
 
+    // MARK: - Looking back at earlier moves
+
+    @Test func tappingAnEarlierMoveShowsTheBoardAfterThatMove() throws {
+        let model = try modelAfter(["e2", "e4", "e7", "e5", "g1", "f3"])
+
+        model.viewMove(at: 0)
+
+        #expect(model.isViewingEarlierMove)
+        #expect(model.highlightedMoveIndex == 0)
+        #expect(model.displayedGame.piece(at: try square("e5")) == nil)  // Black hasn't replied.
+        #expect(model.displayedGame.piece(at: try square("g1")) == ChessPiece(.knight, .white))
+        // The real game is untouched.
+        #expect(model.game.piece(at: try square("f3")) == ChessPiece(.knight, .white))
+    }
+
+    @Test func boardTapsDoNothingWhileLookingBack() throws {
+        let model = try modelAfter(["e2", "e4", "e7", "e5"])
+        model.viewMove(at: 0)
+
+        model.tap(try square("g1"))
+        model.tap(try square("f3"))
+
+        #expect(model.selectedSquare == nil)
+        #expect(model.game.moveHistory == ["e4", "e5"])
+    }
+
+    @Test func undoIsOffWhileLookingBack() throws {
+        let model = try modelAfter(["e2", "e4", "e7", "e5"])
+        model.viewMove(at: 0)
+
+        #expect(model.canUndo == false)
+        model.undo()
+        #expect(model.game.moveHistory == ["e4", "e5"])
+    }
+
+    @Test func backToGameShowsTheCurrentPositionAgain() throws {
+        let model = try modelAfter(["e2", "e4", "e7", "e5"])
+        model.viewMove(at: 0)
+
+        model.returnToCurrentMove()
+
+        #expect(model.isViewingEarlierMove == false)
+        #expect(model.highlightedMoveIndex == 1)
+        #expect(model.displayedGame.piece(at: try square("e5")) == ChessPiece(.pawn, .black))
+    }
+
+    @Test func tappingTheLatestMoveIsTheSameAsBackToGame() throws {
+        let model = try modelAfter(["e2", "e4", "e7", "e5"])
+        model.viewMove(at: 0)
+
+        model.viewMove(at: 1)
+
+        #expect(model.isViewingEarlierMove == false)
+    }
+
+    @Test func newGameStopsLookingBack() throws {
+        let model = try modelAfter(["e2", "e4", "e7", "e5"])
+        model.viewMove(at: 0)
+
+        model.startNewGame()
+
+        #expect(model.isViewingEarlierMove == false)
+        #expect(model.highlightedMoveIndex == nil)
+    }
+
+    /// A new game with the given squares tapped in order.
+    private func modelAfter(_ taps: [String]) throws -> GameModel {
+        let model = GameModel()
+        for name in taps {
+            model.tap(try square(name))
+        }
+        return model
+    }
+
     private func square(_ name: String) throws -> BoardSquare {
         try #require(BoardSquare(name: name))
     }

@@ -20,6 +20,7 @@ public struct ChessGame: Sendable {
     private struct PlayedMove: Sendable {
         let boardBefore: Board
         let san: String
+        let squares: MoveSquares
     }
 
     /// A new game from the standard starting position.
@@ -59,19 +60,40 @@ public struct ChessGame: Sendable {
     /// The moves grouped into numbered rows for the move list: "1. e4 e5", "2. Nf3 …".
     public var moveListRows: [MoveListRow] {
         var rows: [MoveListRow] = []
-        for played in history {
+        for (index, played) in history.enumerated() {
             let number = played.boardBefore.position.clock.fullmoves
+            let entry = MoveListRow.Entry(index: index, san: played.san)
             if played.boardBefore.position.sideToMove == .white {
-                rows.append(MoveListRow(number: number, white: played.san, black: nil))
+                rows.append(MoveListRow(number: number, white: entry, black: nil))
             } else if let last = rows.last, last.number == number, last.black == nil {
-                rows[rows.count - 1] = MoveListRow(
-                    number: number, white: last.white, black: played.san)
+                rows[rows.count - 1] = MoveListRow(number: number, white: last.white, black: entry)
             } else {
                 // Black moved first, so this row has no White move.
-                rows.append(MoveListRow(number: number, white: nil, black: played.san))
+                rows.append(MoveListRow(number: number, white: nil, black: entry))
             }
         }
         return rows
+    }
+
+    /// The squares the most recent move went between, or nil before the first move.
+    public var lastMove: MoveSquares? {
+        history.last?.squares
+    }
+
+    /// The game as it stood right after the move at `index` (0 is the first move),
+    /// or nil if there's no such move.
+    ///
+    /// This is a separate copy for looking back at: the real game isn't changed.
+    public func game(afterMoveAt index: Int) -> ChessGame? {
+        guard history.indices.contains(index) else { return nil }
+        var earlier = self
+        earlier.history = Array(history.prefix(index + 1))
+        // The board right after this move is the board saved before the next one.
+        // For the latest move, it's the current board.
+        if history.indices.contains(index + 1) {
+            earlier.board = history[index + 1].boardBefore
+        }
+        return earlier
     }
 
     /// True when there's a move to take back.
@@ -124,7 +146,10 @@ public struct ChessGame: Sendable {
         if case .promotion(let promotionMove) = board.state {
             chessKitMove = board.completePromotion(of: promotionMove, to: .queen)
         }
-        history.append(PlayedMove(boardBefore: boardBefore, san: chessKitMove.san))
+        history.append(
+            PlayedMove(
+                boardBefore: boardBefore, san: chessKitMove.san,
+                squares: MoveSquares(from: start, to: end)))
         return true
     }
 
