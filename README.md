@@ -4,7 +4,7 @@ A chess tutor for iPhone that **grades your moves and explains why** — at a le
 
 There are plenty of places to *play* chess. PawnPals is about *learning*: after each move it tells you whether it was great, good, an inaccuracy, a mistake, or a blunder, and gives a short, kid-friendly reason ("your knight on f3 isn't protected").
 
-> Status: **design stage.** No app code yet. See [docs/DESIGN.md](docs/DESIGN.md).
+> Status: **step 0 of the build plan.** The app runs and shows a welcome screen; no chess yet. See [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Planned features (v1)
 
@@ -26,11 +26,15 @@ There are plenty of places to *play* chess. PawnPals is about *learning*: after 
 
 ## Tech stack
 
-- **Swift + SwiftUI** (iOS app, built in Xcode)
+- **Swift + SwiftUI**, iPhone only, iOS 18+ (built in Xcode 27)
 - **ChessKit** for chess rules, **ChessKitEngine** for Stockfish (and lc0/Maia later)
 - **SwiftData** for saving progress on the device — no accounts
 - **Swift Testing** for tests
-- **Apple Foundation Models** (on-device) for the coach's voice, with a cloud model as an option
+- **A cloud AI model behind a small proxy** for the coach's friendlier voice (optional; template sentences always work on their own)
+
+## Building it
+
+You need a Mac with Xcode 27. Open `PawnPals.xcodeproj` and press ▶ with an iPhone simulator selected. Chess logic lives in the `PawnPalsCore` package and its tests run with `swift test --package-path PawnPalsCore`. See [AGENTS.md](AGENTS.md) for all the commands and project conventions.
 
 ## Build plan
 

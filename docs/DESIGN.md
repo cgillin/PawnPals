@@ -85,9 +85,10 @@ Mate scores become ~100% or ~0%.
 3. **When no fact finder fires**, the coach is honest: *"The computer sees a deeper idea here — step through it to see."* Never invent a reason.
 4. **AI voice (later step):** an AI model gets **only** the facts + template sentence and rewrites them in a friendlier way. Code then checks that every piece and square it mentions is in the facts; if not, we show the template instead.
 
-**Where the AI model runs:**
-- **Apple Foundation Models (on-device)** — free, private, no API key, no server. Needs an Apple Intelligence-capable iPhone. Start here.
-- **Cloud model** (e.g. Claude Haiku) — smarter, but needs a tiny server (e.g. Cloudflare Worker) to hide the API key. **Never put an API key inside the app.** Set a monthly spend limit.
+**Where the AI model runs: in the cloud, behind a small proxy.**
+- **Cloud model** (e.g. Claude Haiku) behind a tiny server (e.g. a Cloudflare Worker) that holds the API key. **Never put an API key inside the app.** Set a monthly spend limit.
+- The template sentences always work on their own. If the network or the proxy is down, the coach falls back to them, so the AI voice is polish, never a requirement.
+- *Why not Apple's on-device Foundation Models?* They need iOS 26 and an Apple Intelligence iPhone (15 Pro or newer). Our test phone is an iPhone XR, which stops at iOS 18. If we later target newer phones only, on-device becomes an option again: free, private, no server.
 
 > **Why:** language models are great with words and bad at tracking 32 pieces — they invent illegal moves. ChessKit and Stockfish are never wrong about the board. Each tool does what it's good at.
 
@@ -154,12 +155,13 @@ A **puzzle** is the position *before* the player's mistake; the solution is Stoc
 
 | Choice | Why |
 |---|---|
-| **Swift + SwiftUI** | The target is iPhone. Native means fast engines, Maia support, on-device AI, and Game Center for multiplayer later. Xcode Previews show changes as you type. |
+| **Swift + SwiftUI** | The target is iPhone. Native means fast engines, Maia support, and Game Center for multiplayer later. Xcode Previews show changes as you type. |
+| **iPhone only, iOS 18+** | Our test phone is an iPhone XR, whose last iOS is 18. Its A12 chip runs Stockfish easily. |
 | **ChessKit** | Trusted rules referee: legal moves, check, mate, PGN/FEN. |
 | **ChessKitEngine** | Stockfish (and lc0 for Maia) packaged for iOS. |
 | **SwiftData** | Built-in local database. No accounts needed. |
 | **Swift Testing** | Built into Xcode. For the grader and fact finders. |
-| **Apple Foundation Models** | Free, private, on-device AI for the coach's voice. |
+| **Cloud AI model + small proxy** | The coach's friendlier voice (optional polish). The proxy keeps the API key out of the app. |
 | **GPL-3.0, public repo** | Stockfish and lc0 are GPL, so our code must be open source if we ever ship. |
 
 Running on your own iPhone needs only a free Apple ID (the install expires after 7 days — just re-run from Xcode). TestFlight / App Store needs the $99/year Apple Developer Program.

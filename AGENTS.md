@@ -22,7 +22,7 @@ These come from the design and are not negotiable:
 4. **No invented reasons.** If no fact finder fires, the coach says the computer sees a deeper idea and offers to step through the line.
 5. **Scores are stored from White's point of view, always.** Stockfish reports from the side to move; convert at the engine boundary, in exactly one place. Grading converts to the mover's point of view when it needs to.
 6. **Grade with win %, not raw centipawns.** Mate scores map to ~100% / ~0%. All grading thresholds live in one file (`GradingThresholds`).
-7. **No API keys in the app.** Use Apple's on-device Foundation Models, or a server proxy for cloud models.
+7. **No API keys in the app.** The AI coach voice uses a cloud model through a small server proxy that holds the key. Apple's on-device Foundation Models aren't an option: they need iOS 26 and Apple Intelligence, and our test phone (iPhone XR) tops out at iOS 18.
 
 ## Project layout
 
@@ -76,22 +76,29 @@ docs/
 - Use full words, not abbreviations: `evaluation`, not `eval`. Chess terms (`fen`, `pgn`, `san`, `ply`) are fine.
 - Format with the `swift format` tool that ships with Xcode before committing.
 
+## Platform
+
+- **iPhone only, iOS 18.0 minimum.** Our test phone is an iPhone XR, whose last iOS is 18. Don't use APIs newer than iOS 18 unless they're wrapped in `if #available` with a working fallback.
+- Swift 6 mode and warnings-as-errors are set for every target (see **Warnings are errors** below).
+
 ## Xcode project rules
 
-- **Never hand-edit `PawnPals.xcodeproj/project.pbxproj`.** The project uses folder-synchronized groups, so new files created on disk under `PawnPals/` show up in Xcode automatically.
-- Add package dependencies through Xcode (File → Add Package Dependencies) for the app, or in `PawnPalsCore/Package.swift` for the core package.
+- **The project file is `PawnPals.xcodeproj/project.xcproj`**, Xcode 27's readable text format (it replaced the old `project.pbxproj`). Xcode opens it as text, not as a settings screen.
+- **Small build-setting edits in that file are fine.** After any edit, prove Xcode reads it the way you meant: check the value with `xcodebuild -showBuildSettings -project PawnPals.xcodeproj -target <target> -sdk iphonesimulator`, then build and run the tests. Don't restructure the file by hand. Let Xcode manage targets, IDs, and package references.
+- Source folders are `"kind": "folder"` entries, so new files created on disk under `PawnPals/`, `PawnPalsTests/`, or `PawnPalsUITests/` are picked up automatically.
+- The `PawnPals` scheme isn't committed; Xcode and `xcodebuild` generate it automatically, including on a fresh clone in CI.
+- Add package dependencies through Xcode (File → Add Package Dependencies; **Add Local…** for `PawnPalsCore`) for the app, or in `PawnPalsCore/Package.swift` for the core package.
 - **Approved dependencies:** ChessKit (`chesskit-swift`), ChessKitEngine (`chesskit-engine`). Ask before adding any other.
 
 ## Testing
 
-- Use **Swift Testing** (`import Testing`, `@Test`, `#expect`, `#require`), not XCTest, for unit tests.
+- Use **Swift Testing** (`import Testing`, `@Test`, `#expect`, `#require`), not XCTest, for unit tests. UI tests in `PawnPalsUITests/` are the exception: they still use XCTest, because driving the app UI requires it.
+- Keep UI tests few and fast. They launch the app in a simulator and are the slowest part of CI.
 - Every grading function and fact finder gets tests, written first when practical. Use real FEN positions as test inputs, and name each test after the chess idea (`@Test func knightLeftUndefendedIsHanging()`).
 - Must-have tests: the score sign flip, mate scores, and the boundary value of each grading threshold.
 - Tests that start Stockfish are slower. Tag them `.tags(.engine)` so they can be skipped during quick runs.
 
 ## Commands
-
-> Fill in the scheme and simulator names after step 0 creates the Xcode project.
 
 ```bash
 # Core logic tests (fast, no simulator)
@@ -100,11 +107,14 @@ swift test --package-path PawnPalsCore
 # Build the app for the simulator
 xcodebuild -project PawnPals.xcodeproj -scheme PawnPals -destination 'platform=iOS Simulator,name=iPhone 17' build
 
-# Run app tests
+# Run app tests (unit + UI)
 xcodebuild -project PawnPals.xcodeproj -scheme PawnPals -destination 'platform=iOS Simulator,name=iPhone 17' test
 
-# Format (fixes files in place)
-swift format --in-place --recursive PawnPals PawnPalsCore
+# Run only the fast unit tests
+xcodebuild -project PawnPals.xcodeproj -scheme PawnPals -destination 'platform=iOS Simulator,name=iPhone 17' test -only-testing:PawnPalsTests
+
+# Format (fixes files in place; only files git tracks, so build output is skipped)
+git ls-files '*.swift' | xargs swift format --in-place --configuration .swift-format
 
 # Lint (what CI runs; fails on any problem)
 git ls-files '*.swift' | xargs swift format lint --strict --configuration .swift-format
@@ -113,7 +123,9 @@ git ls-files '*.swift' | xargs swift format lint --strict --configuration .swift
 git config core.hooksPath .githooks
 ```
 
-**Warnings are errors.** When step 0 creates the project, set `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` on the app target, and give `PawnPalsCore` targets `swiftSettings: [.treatAllWarnings(as: .error)]`. Don't silence a warning to get a build through; fix it.
+CI doesn't use `iPhone 17`; it picks the first available iPhone simulator on the runner, because runner images change which simulators they ship.
+
+**Warnings are errors.** The app project sets `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` project-wide, and every `PawnPalsCore` target has `swiftSettings: [.treatAllWarnings(as: .error)]`. New targets must keep this. Don't silence a warning to get a build through; fix it.
 
 ## Lint rules
 
