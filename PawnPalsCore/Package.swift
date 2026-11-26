@@ -21,9 +21,16 @@ let package = Package(
     products: [
         .library(name: "PawnPalsCore", targets: ["PawnPalsCore"])
     ],
+    dependencies: [
+        // Chess rules: legal moves, check, checkmate, FEN. The referee for every move.
+        .package(url: "https://github.com/chesskit-app/chesskit-swift", from: "0.17.0")
+    ],
     targets: [
         .target(
             name: "PawnPalsCore",
+            dependencies: [
+                .product(name: "ChessKit", package: "chesskit-swift")
+            ],
             swiftSettings: strictSettings
         ),
         .testTarget(
