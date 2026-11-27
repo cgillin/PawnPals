@@ -12,14 +12,20 @@ struct BoardView: View {
         // The real game, or an earlier move if we're looking back.
         let game = model.displayedGame
         let lastMove = game.lastMove
-        // Top row first, left column first. Flipping reverses both, like turning the board around.
-        let ranks: [Int] = model.isBoardFlipped ? Array(0..<8) : Array((0..<8).reversed())
-        let files: [Int] = model.isBoardFlipped ? Array((0..<8).reversed()) : Array(0..<8)
+        let isFlipped = model.isBoardFlipped
 
+        // Loop over screen positions (row 0 is the top, column 0 the left), then
+        // work out which square sits there. Keying the views by position, not by
+        // square, means a flip just redraws each spot with a different square.
+        // Keyed by square, SwiftUI would think every square moved across the
+        // board and could slide the highlights over to their new spots.
         VStack(spacing: 0) {
-            ForEach(ranks, id: \.self) { rank in
+            ForEach(0..<8, id: \.self) { row in
                 HStack(spacing: 0) {
-                    ForEach(files, id: \.self) { file in
+                    ForEach(0..<8, id: \.self) { column in
+                        // Flipping reverses both, like turning the board around.
+                        let rank = isFlipped ? row : 7 - row
+                        let file = isFlipped ? 7 - column : column
                         if let square = BoardSquare(file: file, rank: rank) {
                             squareButton(
                                 for: square, in: game,
@@ -46,7 +52,7 @@ struct BoardView: View {
                 square: square, piece: piece, isSelected: isSelected, isHighlighted: isHighlighted,
                 isLastMove: isLastMove)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SquareButtonStyle())
         // VoiceOver reads e.g. "e2, white pawn, selected".
         .accessibilityLabel("\(square.name), \(piece?.spokenName ?? "empty")")
         .accessibilityValue(
@@ -54,6 +60,15 @@ struct BoardView: View {
                 ? "selected" : isHighlighted ? "can move here" : isLastMove ? "last move" : ""
         )
         .accessibilityIdentifier("square-\(square.name)")
+    }
+}
+
+/// A button style for board squares that draws the square as it is, with no
+/// dimming while pressed. The built-in styles fade the square back in after a
+/// tap, and when that tap flips the board the fade shows up on the wrong spot.
+private struct SquareButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
     }
 }
 
