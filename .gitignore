@@ -23,3 +23,8 @@ Packages/
 *.xcconfig.local
 Secrets.swift
 .env
+
+# Stockfish neural networks: too big for git. Fetch them with
+# scripts/fetch-stockfish-networks.sh
+*.nnue
+*.nnue.partial

@@ -49,7 +49,7 @@ docs/
 - Swift 6 language mode with strict concurrency checking. Don't turn warnings off to make code compile; fix the cause.
 - Keep the app target's default `MainActor` isolation from the Xcode template.
 - Use `async`/`await`. Don't use completion handlers, Combine, or `DispatchQueue`.
-- The engine wrapper is an `actor` so only one request talks to Stockfish at a time. The opponent and the analyzer use **separate engine instances**.
+- The engine wrapper is an `actor` so only one request talks to Stockfish at a time. The opponent and the analyzer **share one engine and take turns** through its queue: ChessKitEngine can only run one Stockfish per app, because it takes over the app's input and output to talk to it. Each request sends its own settings, so one job's settings never leak into the other's.
 
 **Types**
 - Model chess concepts with `struct` and `enum` (value types). Use `class` only when SwiftUI or SwiftData requires it.
@@ -102,8 +102,14 @@ docs/
 ## Commands
 
 ```bash
+# Download Stockfish's neural networks (once per clone; they're not in git)
+scripts/fetch-stockfish-networks.sh
+
 # Core logic tests (fast, no simulator)
 swift test --package-path PawnPalsCore
+
+# Core logic tests without the ones that start Stockfish
+swift test --package-path PawnPalsCore --skip StockfishEngineTests
 
 # Build the app for the simulator
 xcodebuild -project PawnPals.xcodeproj -scheme PawnPals -destination 'platform=iOS Simulator,name=iPhone 17' build

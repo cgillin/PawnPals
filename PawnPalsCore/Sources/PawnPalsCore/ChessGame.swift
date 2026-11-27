@@ -42,6 +42,11 @@ public struct ChessGame: Sendable {
         Self.side(from: board.position.sideToMove)
     }
 
+    /// The current position written as FEN, the format chess engines read.
+    public var fen: String {
+        board.position.fen
+    }
+
     /// How the game ended, or nil while it's still being played.
     public var outcome: GameOutcome? {
         switch board.state {

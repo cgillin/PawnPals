@@ -28,13 +28,24 @@ let package = Package(
         .package(
             url: "https://github.com/chesskit-app/chesskit-swift",
             .upToNextMinor(from: "0.17.0")
-        )
+        ),
+        // Stockfish, packaged for iOS. Also 0.x, so the same rule: bug fixes only.
+        .package(
+            url: "https://github.com/chesskit-app/chesskit-engine",
+            .upToNextMinor(from: "0.7.0")
+        ),
     ],
     targets: [
         .target(
             name: "PawnPalsCore",
             dependencies: [
-                .product(name: "ChessKit", package: "chesskit-swift")
+                .product(name: "ChessKit", package: "chesskit-swift"),
+                .product(name: "ChessKitEngine", package: "chesskit-engine"),
+            ],
+            resources: [
+                // Stockfish's neural networks. Not in git: scripts/fetch-stockfish-networks.sh
+                // downloads them into this folder.
+                .copy("Engine/Networks")
             ],
             swiftSettings: strictSettings
         ),
