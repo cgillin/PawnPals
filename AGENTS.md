@@ -1,4 +1,4 @@
-# PawnPals — Agent Context
+# PittChess — Agent Context
 
 An iPhone chess tutor that **grades moves and explains why**, at the player's level.
 Full design: [docs/DESIGN.md](docs/DESIGN.md). Read it before making architectural changes.
@@ -27,20 +27,20 @@ These come from the design and are not negotiable:
 ## Project layout
 
 ```
-PawnPals/                  ← Xcode app target: SwiftUI views + SwiftData only
-PawnPalsCore/              ← local Swift package: all chess logic, no UI
-  Sources/PawnPalsCore/
+PittChess/                 ← Xcode app target: SwiftUI views + SwiftData only
+PittChessCore/             ← local Swift package: all chess logic, no UI
+  Sources/PittChessCore/
     Engine/                ← Stockfish wrapper (an actor)
     Grading/               ← win-% math, classifier, thresholds
     Facts/                 ← fact finders (hanging piece, fork, mate in 1, …)
     Coaching/              ← templates, coaching levels, AI rewording + check
-  Tests/PawnPalsCoreTests/
+  Tests/PittChessCoreTests/
 docs/
 ```
 
-**Why a separate package:** chess logic in `PawnPalsCore` has no UI, so its tests run in seconds with `swift test`, without launching a simulator. The app target stays thin: it shows things and saves things.
+**Why a separate package:** chess logic in `PittChessCore` has no UI, so its tests run in seconds with `swift test`, without launching a simulator. The app target stays thin: it shows things and saves things.
 
-- `PawnPalsCore` must not import SwiftUI or SwiftData.
+- `PittChessCore` must not import SwiftUI or SwiftData.
 - The app target must not contain grading, fact-finding, or engine logic.
 
 ## Swift conventions
@@ -70,7 +70,7 @@ docs/
 - Give board squares and pieces VoiceOver labels ("white knight on f3").
 
 **SwiftData**
-- `@Model` classes live in the app target only. Convert to and from plain `PawnPalsCore` structs at that boundary.
+- `@Model` classes live in the app target only. Convert to and from plain `PittChessCore` structs at that boundary.
 
 **Naming and style**
 - Follow the [Swift API Design Guidelines](https://www.swift.org/documentation/api-design-guidelines/): `UpperCamelCase` types, `lowerCamelCase` everything else, names that read clearly at the call site (`board.move(from: .e2, to: .e4)`).
@@ -84,16 +84,16 @@ docs/
 
 ## Xcode project rules
 
-- **The project file is `PawnPals.xcodeproj/project.xcproj`**, Xcode 27's readable text format (it replaced the old `project.pbxproj`). Xcode opens it as text, not as a settings screen.
-- **Small build-setting edits in that file are fine.** After any edit, prove Xcode reads it the way you meant: check the value with `xcodebuild -showBuildSettings -project PawnPals.xcodeproj -target <target> -sdk iphonesimulator`, then build and run the tests. Don't restructure the file by hand. Let Xcode manage targets, IDs, and package references.
-- Source folders are `"kind": "folder"` entries, so new files created on disk under `PawnPals/`, `PawnPalsTests/`, or `PawnPalsUITests/` are picked up automatically.
-- The `PawnPals` scheme isn't committed; Xcode and `xcodebuild` generate it automatically, including on a fresh clone in CI.
-- Add package dependencies through Xcode (File → Add Package Dependencies; **Add Local…** for `PawnPalsCore`) for the app, or in `PawnPalsCore/Package.swift` for the core package.
+- **The project file is `PittChess.xcodeproj/project.xcproj`**, Xcode 27's readable text format (it replaced the old `project.pbxproj`). Xcode opens it as text, not as a settings screen.
+- **Small build-setting edits in that file are fine.** After any edit, prove Xcode reads it the way you meant: check the value with `xcodebuild -showBuildSettings -project PittChess.xcodeproj -target <target> -sdk iphonesimulator`, then build and run the tests. Don't restructure the file by hand. Let Xcode manage targets, IDs, and package references.
+- Source folders are `"kind": "folder"` entries, so new files created on disk under `PittChess/`, `PittChessTests/`, or `PittChessUITests/` are picked up automatically.
+- The `PittChess` scheme isn't committed; Xcode and `xcodebuild` generate it automatically, including on a fresh clone in CI.
+- Add package dependencies through Xcode (File → Add Package Dependencies; **Add Local…** for `PittChessCore`) for the app, or in `PittChessCore/Package.swift` for the core package.
 - **Approved dependencies:** ChessKit (`chesskit-swift`), ChessKitEngine (`chesskit-engine`). Ask before adding any other.
 
 ## Testing
 
-- Use **Swift Testing** (`import Testing`, `@Test`, `#expect`, `#require`), not XCTest, for unit tests. UI tests in `PawnPalsUITests/` are the exception: they still use XCTest, because driving the app UI requires it.
+- Use **Swift Testing** (`import Testing`, `@Test`, `#expect`, `#require`), not XCTest, for unit tests. UI tests in `PittChessUITests/` are the exception: they still use XCTest, because driving the app UI requires it.
 - Keep UI tests few and fast. They launch the app in a simulator and are the slowest part of CI.
 - Every grading function and fact finder gets tests, written first when practical. Use real FEN positions as test inputs, and name each test after the chess idea (`@Test func knightLeftUndefendedIsHanging()`).
 - Must-have tests: the score sign flip, mate scores, and the boundary value of each grading threshold.
@@ -106,19 +106,19 @@ docs/
 scripts/fetch-stockfish-networks.sh
 
 # Core logic tests (fast, no simulator)
-swift test --package-path PawnPalsCore
+swift test --package-path PittChessCore
 
 # Core logic tests without the ones that start Stockfish
-swift test --package-path PawnPalsCore --skip StockfishEngineTests
+swift test --package-path PittChessCore --skip StockfishEngineTests
 
 # Build the app for the simulator
-xcodebuild -project PawnPals.xcodeproj -scheme PawnPals -destination 'platform=iOS Simulator,name=iPhone 17' build
+xcodebuild -project PittChess.xcodeproj -scheme PittChess -destination 'platform=iOS Simulator,name=iPhone 17' build
 
 # Run app tests (unit + UI)
-xcodebuild -project PawnPals.xcodeproj -scheme PawnPals -destination 'platform=iOS Simulator,name=iPhone 17' test
+xcodebuild -project PittChess.xcodeproj -scheme PittChess -destination 'platform=iOS Simulator,name=iPhone 17' test
 
 # Run only the fast unit tests
-xcodebuild -project PawnPals.xcodeproj -scheme PawnPals -destination 'platform=iOS Simulator,name=iPhone 17' test -only-testing:PawnPalsTests
+xcodebuild -project PittChess.xcodeproj -scheme PittChess -destination 'platform=iOS Simulator,name=iPhone 17' test -only-testing:PittChessTests
 
 # Format (fixes files in place; only files git tracks, so build output is skipped)
 git ls-files '*.swift' | xargs swift format --in-place --configuration .swift-format
@@ -132,7 +132,7 @@ git config core.hooksPath .githooks
 
 CI doesn't use `iPhone 17`; it picks the first available iPhone simulator on the runner, because runner images change which simulators they ship.
 
-**Warnings are errors.** The app project sets `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` project-wide, and every `PawnPalsCore` target has `swiftSettings: [.treatAllWarnings(as: .error)]`. New targets must keep this. Don't silence a warning to get a build through; fix it.
+**Warnings are errors.** The app project sets `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` project-wide, and every `PittChessCore` target has `swiftSettings: [.treatAllWarnings(as: .error)]`. New targets must keep this. Don't silence a warning to get a build through; fix it.
 
 ## Lint rules
 
