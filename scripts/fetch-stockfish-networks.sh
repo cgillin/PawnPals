@@ -15,7 +15,7 @@ set -euo pipefail
 # otherwise read a following "…" as part of the name and stop with "unbound variable".
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
-destination="${repo_root}/PawnPalsCore/Sources/PawnPalsCore/Engine/Networks"
+destination="${repo_root}/PittChessCore/Sources/PittChessCore/Engine/Networks"
 source_url="https://tests.stockfishchess.org/api/nn"
 
 # name and SHA-256. A network's name is the first 12 characters of its fingerprint.

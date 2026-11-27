@@ -3,7 +3,7 @@
 #
 # "Code" = .swift files outside any *Tests/ folder (Package.swift excluded).
 # "Tests" = .swift files inside a folder whose name ends in "Tests/",
-#           e.g. PawnPalsCore/Tests/... or PawnPalsTests/...
+#           e.g. PittChessCore/Tests/... or PittChessTests/...
 #
 # Escape hatch: add the "no-tests-needed" label to the PR (renames, UI-only tweaks).
 set -euo pipefail
@@ -43,7 +43,7 @@ echo "::error::This PR changes Swift code but no tests."
 echo "Changed code files:"
 printf '  %s\n' $code_changes
 echo
-echo "Add or update tests in PawnPalsCore/Tests/ or PawnPalsTests/."
+echo "Add or update tests in PittChessCore/Tests/ or PittChessTests/."
 echo "If this change really needs no tests (a rename, a UI-only tweak), add the"
 echo "'no-tests-needed' label to the PR."
 exit 1
