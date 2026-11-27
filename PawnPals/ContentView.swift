@@ -11,6 +11,8 @@ import SwiftUI
 struct ContentView: View {
     /// `@State` keeps the same game alive while the screen redraws.
     @State private var model: GameModel
+    /// The engine's opinion of the board, shared from `PawnPalsApp`.
+    @Environment(AnalysisModel.self) private var analysis
 
     /// Previews pass in a game that's already under way; the app starts a new one.
     init(model: GameModel = GameModel()) {
@@ -43,7 +45,20 @@ struct ContentView: View {
             }
             .frame(minHeight: 36)
 
-            BoardView(model: model)
+            // The engine's score and the material count sit just above the board.
+            VStack(spacing: 8) {
+                EvaluationHeaderView(
+                    evaluation: analysis.evaluation,
+                    materialBalance: model.displayedGame.materialBalance,
+                    isFlipped: model.isBoardFlipped, isUnavailable: analysis.isUnavailable,
+                    isStale: !analysis.isCurrent(for: model.displayedGame.fen))
+                BoardView(model: model)
+            }
+            // Runs whenever the position on screen changes, and cancels the
+            // previous request first, so the bar always matches the board.
+            .task(id: model.displayedGame.fen) {
+                await analysis.update(for: model.displayedGame)
+            }
 
             // The moves, with the small undo and flip buttons tucked in at the right.
             HStack {
@@ -87,10 +102,12 @@ struct ContentView: View {
 
 #Preview("New game") {
     ContentView()
+        .environment(AnalysisModel.preview(showing: .centipawns(20)))
 }
 
 #Preview("Checkmate") {
     ContentView(model: foolsMateModel())
+        .environment(AnalysisModel.preview(showing: .mate(winner: .black, moves: 0)))
 }
 
 /// The fastest checkmate there is: 1. f3 e5 2. g4 Qh4#
