@@ -22,9 +22,10 @@ final class PawnPalsUITests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    /// Launches the app, checks the title and board appear, then plays 1. e4 by tapping.
+    /// Launches the app, checks the title and board appear, plays 1. e4 by tapping,
+    /// checks it shows in the move list, then takes it back with Undo.
     @MainActor
-    func testPlayingTheFirstMoveByTapping() throws {
+    func testPlayingAndUndoingTheFirstMove() throws {
         let app = XCUIApplication()
         app.launch()
 
@@ -42,5 +43,13 @@ final class PawnPalsUITests: XCTestCase {
         XCTAssertEqual(app.buttons["square-e4"].label, "e4, white pawn")
         XCTAssertEqual(app.buttons["square-e2"].label, "e2, empty")
         XCTAssertEqual(turnLabel.label, "Black to move")
+        XCTAssertEqual(app.buttons["move-0"].label, "Move 1, White: e4")
+
+        // Take the move back.
+        app.buttons["undo-button"].tap()
+
+        XCTAssertEqual(app.buttons["square-e2"].label, "e2, white pawn")
+        XCTAssertEqual(turnLabel.label, "White to move")
+        XCTAssertFalse(app.buttons["undo-button"].isEnabled)
     }
 }

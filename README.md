@@ -4,7 +4,7 @@ A chess tutor for iPhone that **grades your moves and explains why** — at a le
 
 There are plenty of places to *play* chess. PawnPals is about *learning*: after each move it tells you whether it was great, good, an inaccuracy, a mistake, or a blunder, and gives a short, kid-friendly reason ("your knight on f3 isn't protected").
 
-> Status: **step 1 of the build plan.** Two players can play a full game on one phone (tap a piece, tap where it goes). No computer opponent or move grading yet. See [docs/DESIGN.md](docs/DESIGN.md).
+> Status: **step 2 of the build plan.** Two players can play a full game on one phone (tap a piece, tap where it goes), with a move list you can tap to look back at earlier positions, undo, a "flip each turn" switch, and a game-over card. No computer opponent or move grading yet. See [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Planned features (v1)
 

@@ -8,6 +8,8 @@ struct SquareView: View {
     let isSelected: Bool
     /// True when the selected piece can move here.
     let isHighlighted: Bool
+    /// True when the last move started or ended here.
+    var isLastMove = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -15,6 +17,11 @@ struct SquareView: View {
             ZStack {
                 Rectangle()
                     .fill(square.isLight ? Self.lightSquare : Self.darkSquare)
+
+                if isLastMove {
+                    // A softer tint than "selected", so you can tell them apart.
+                    Rectangle().fill(.yellow.opacity(0.25))
+                }
 
                 if isSelected {
                     Rectangle().fill(.yellow.opacity(0.45))
