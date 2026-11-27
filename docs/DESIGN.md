@@ -195,7 +195,7 @@ Steps 0–1 are the steepest: Xcode, Swift, and the board all at once. Budget 2�
 
 1. **Xcode setup & code signing** — getting the app onto the phone trips up everyone the first time. That's why it's step 0.
 2. **Swift basics** — optionals (`?` and `!`) confuse beginners. Learn them while building the board.
-3. **Async engine calls** — Stockfish answers over time. The opponent and the analyzer must not fight over one engine: use two engine instances or a queue.
+3. **Async engine calls** — Stockfish answers over time. The opponent and the analyzer must not fight over one engine. ChessKitEngine can only run one Stockfish per app, so they share it through a queue and take turns.
 4. **Score sign flips and mate scores** — see §3. Test them.
 5. **"Hanging" is subtle** — attacked-but-defended, defended-but-attacked-by-a-cheaper-piece, pins. Start simple; improve later.
 6. **Honest "why"** — some best moves are deep strategy no fact finder can name. Don't invent reasons.

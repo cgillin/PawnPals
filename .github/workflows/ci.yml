@@ -54,6 +54,18 @@ jobs:
       - name: Use the newest Xcode on the runner
         run: .github/scripts/select-xcode.sh
 
+      # Stockfish's neural networks (78 MB) aren't in git. Keep them between runs,
+      # so CI only downloads them when the cache is empty or the networks change.
+      # The key comes from the fetch script, which lists each file's fingerprint.
+      - name: Restore Stockfish networks from the cache
+        uses: actions/cache@v4
+        with:
+          path: PawnPalsCore/Sources/PawnPalsCore/Engine/Networks/*.nnue
+          key: stockfish-networks-${{ hashFiles('scripts/fetch-stockfish-networks.sh') }}
+
+      - name: Fetch Stockfish networks (skips files already here)
+        run: scripts/fetch-stockfish-networks.sh
+
       - name: Core tests (swift test on PawnPalsCore)
         run: |
           if [ ! -f PawnPalsCore/Package.swift ]; then

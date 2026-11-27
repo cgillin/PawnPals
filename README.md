@@ -4,7 +4,7 @@ A chess tutor for iPhone that **grades your moves and explains why** — at a le
 
 There are plenty of places to *play* chess. PawnPals is about *learning*: after each move it tells you whether it was great, good, an inaccuracy, a mistake, or a blunder, and gives a short, kid-friendly reason ("your knight on f3 isn't protected").
 
-> Status: **step 2 of the build plan.** Two players can play a full game on one phone (tap a piece, tap where it goes), with a move list you can tap to look back at earlier positions, undo, a "flip each turn" switch, and a game-over card. No computer opponent or move grading yet. See [docs/DESIGN.md](docs/DESIGN.md).
+> Status: **step 3 of the build plan.** Two players can play a full game on one phone (tap a piece, tap where it goes), with a move list you can tap to look back at earlier positions, undo, a "flip each turn" switch, and a game-over card. Stockfish runs on the phone and an eval bar beside the board shows who's winning. No computer opponent or move grading yet. See [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Planned features (v1)
 
@@ -34,7 +34,7 @@ There are plenty of places to *play* chess. PawnPals is about *learning*: after 
 
 ## Building it
 
-You need a Mac with Xcode 27. Open `PawnPals.xcodeproj` and press ▶ with an iPhone simulator selected. Chess logic lives in the `PawnPalsCore` package and its tests run with `swift test --package-path PawnPalsCore`. See [AGENTS.md](AGENTS.md) for all the commands and project conventions.
+You need a Mac with Xcode 27. First, download Stockfish's neural networks (78 MB, too big for git) with `scripts/fetch-stockfish-networks.sh`; you only need to do this once per clone. Then open `PawnPals.xcodeproj` and press ▶ with an iPhone simulator selected. Chess logic lives in the `PawnPalsCore` package and its tests run with `swift test --package-path PawnPalsCore`. See [AGENTS.md](AGENTS.md) for all the commands and project conventions.
 
 ## Build plan
 
