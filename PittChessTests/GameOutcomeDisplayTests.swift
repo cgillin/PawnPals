@@ -17,3 +17,9 @@ import Testing
     #expect(outcome.title == "It's a draw")
     #expect(outcome.detail == "The same position came up three times")
 }
+
+@MainActor @Test func resignationCardSaysWhoGaveUp() {
+    let outcome = GameOutcome.resigned(winner: .white)
+    #expect(outcome.title == "Resigned")
+    #expect(outcome.detail == "Black gave up. White wins")
+}

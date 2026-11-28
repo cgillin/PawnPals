@@ -43,9 +43,10 @@ final class AnalysisModel {
     /// Asks the engine about `game`'s current position and updates `evaluation`.
     func update(for game: ChessGame) async {
         let fen = game.fen
-        // A finished game needs no engine: the rules already say who won.
-        if let outcome = game.outcome {
-            show(Evaluation(outcome: outcome), for: fen)
+        // Checkmate and draws need no engine: the rules already score them.
+        // (After a resignation the engine still scores the position left on the board.)
+        if let outcome = game.outcome, let evaluation = Evaluation(outcome: outcome) {
+            show(evaluation, for: fen)
             return
         }
 

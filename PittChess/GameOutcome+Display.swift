@@ -6,6 +6,7 @@ extension GameOutcome {
     var title: String {
         switch self {
         case .checkmate: "Checkmate!"
+        case .resigned: "Resigned"
         case .draw: "It's a draw"
         }
     }
@@ -15,6 +16,8 @@ extension GameOutcome {
         switch self {
         case .checkmate(winner: .white): "White wins"
         case .checkmate(winner: .black): "Black wins"
+        case .resigned(winner: .white): "Black gave up. White wins"
+        case .resigned(winner: .black): "White gave up. Black wins"
         case .draw(.stalemate): "Stalemate: the player to move isn't in check but has no move"
         case .draw(.insufficientMaterial): "Neither side has enough pieces left to checkmate"
         case .draw(.fiftyMoveRule): "Fifty moves with no capture and no pawn move"

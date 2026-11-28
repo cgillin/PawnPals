@@ -148,6 +148,92 @@ import Testing
     #expect(try #require(BoardSquare(name: "e4")).isLight == true)
 }
 
+// MARK: - Moves written the way engines write them
+
+@Test func engineMoveIsPlayed() throws {
+    var game = ChessGame()
+    #expect(game.move(engineMove: "e2e4") == true)
+    #expect(game.piece(at: try #require(BoardSquare(name: "e4"))) == ChessPiece(.pawn, .white))
+    #expect(game.moveHistory == ["e4"])
+}
+
+@Test func engineCanPromoteToAKnight() throws {
+    // Underpromotion: the engine says which piece, and we must not turn it into a queen.
+    var game = try #require(ChessGame(fen: "4k3/P7/8/8/8/8/8/4K3 w - - 0 1"))
+    #expect(game.move(engineMove: "a7a8n") == true)
+    #expect(game.piece(at: try #require(BoardSquare(name: "a8"))) == ChessPiece(.knight, .white))
+}
+
+@Test func engineMoveWithoutAPieceLetterPromotesToAQueen() throws {
+    var game = try #require(ChessGame(fen: "4k3/P7/8/8/8/8/8/4K3 w - - 0 1"))
+    #expect(game.move(engineMove: "a7a8") == true)
+    #expect(game.piece(at: try #require(BoardSquare(name: "a8"))) == ChessPiece(.queen, .white))
+}
+
+@Test func illegalEngineMoveIsRejected() throws {
+    var game = ChessGame()
+    #expect(game.move(engineMove: "e2e5") == false)  // Pawns can't jump three squares.
+    #expect(game.move(engineMove: "e7e5") == false)  // It's White's turn.
+    #expect(game.moveHistory.isEmpty)
+}
+
+@Test func garbledEngineMoveIsRejected() throws {
+    var game = try #require(ChessGame(fen: "4k3/P7/8/8/8/8/8/4K3 w - - 0 1"))
+    #expect(game.move(engineMove: "(none)") == false)
+    #expect(game.move(engineMove: "a7") == false)
+    #expect(game.move(engineMove: "a7a8k") == false)  // A pawn can't become a king.
+    #expect(game.moveHistory.isEmpty)
+}
+
+// MARK: - Resigning
+
+@Test func resigningGivesTheOtherSideTheWin() {
+    var game = ChessGame()
+    game.move(engineMove: "e2e4")
+
+    #expect(game.resign(.black) == true)
+    #expect(game.outcome == .resigned(winner: .white))
+}
+
+@Test func noMovesAfterResigning() throws {
+    var game = ChessGame()
+    game.resign(.white)
+
+    #expect(game.legalDestinations(from: try #require(BoardSquare(name: "e2"))).isEmpty)
+    #expect(game.move(engineMove: "e2e4") == false)
+}
+
+@Test func resigningCantBeTakenBack() {
+    var game = ChessGame()
+    game.move(engineMove: "e2e4")
+    game.resign(.black)
+
+    #expect(!game.canUndo)
+    #expect(game.undo() == false)
+    #expect(game.moveHistory == ["e4"])
+}
+
+@Test func cantResignAfterCheckmate() throws {
+    // After Fool's Mate (1. f3 e5 2. g4 Qh4#) the game is already over.
+    var game = ChessGame()
+    for move in ["f2f3", "e7e5", "g2g4", "d8h4"] {
+        let wasPlayed = game.move(engineMove: move)
+        try #require(wasPlayed)
+    }
+    #expect(game.resign(.white) == false)
+    #expect(game.outcome == .checkmate(winner: .black))
+}
+
+@Test func lookingBackBeforeAResignationShowsAGameStillOn() throws {
+    var game = ChessGame()
+    game.move(engineMove: "e2e4")
+    game.move(engineMove: "e7e5")
+    game.resign(.white)
+
+    let earlier = try #require(game.game(afterMoveAt: 0))
+    #expect(earlier.outcome == nil)
+}
+
 /// Turns square names into a set, so tests can say `squares("e3", "e4")`.
 private func squares(_ names: String...) -> Set<BoardSquare> {
     Set(names.compactMap { BoardSquare(name: $0) })

@@ -35,6 +35,9 @@ public enum EngineError: Error, Equatable, CustomStringConvertible {
     /// Stockfish finished without ever giving a score.
     case noEvaluation
 
+    /// Stockfish finished without choosing a move.
+    case noMove
+
     public var description: String {
         switch self {
         case .missingNetworkFile(let name):
@@ -43,6 +46,7 @@ public enum EngineError: Error, Equatable, CustomStringConvertible {
         case .notStarted: "Start the engine before asking it about a position."
         case .invalidPosition(let fen): "Not a valid position: \(fen)"
         case .noEvaluation: "Stockfish finished without giving a score."
+        case .noMove: "Stockfish finished without choosing a move."
         }
     }
 }

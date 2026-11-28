@@ -138,6 +138,41 @@ struct StockfishEngineTests {
         #expect(analysis.bestMove == "e1e8")
     }
 
+    @Test func weakenedSearchStillScoresTheTopLine() async throws {
+        // At reduced strength Stockfish also reports weaker moves. The score must still
+        // be the best move's: here, mate in one with Re8#.
+        let analysis = try await startedEngine().analyze(
+            fen: "6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1", depth: 10,
+            strength: .limited(rating: 1320))
+        #expect(analysis.evaluation == .mate(winner: .white, moves: 1))
+        #expect(analysis.bestMove != nil)
+    }
+
+    @Test func stockfishOpponentPlaysALegalMove() async throws {
+        let opponent = StockfishOpponent(engine: try await startedEngine(), rating: 1500)
+        var game = ChessGame()
+        game.move(engineMove: "e2e4")
+
+        let move = try await opponent.chooseMove(in: game)
+
+        let wasPlayed = game.move(engineMove: move)
+        #expect(wasPlayed, "Stockfish chose \(move), which isn't legal")
+        #expect(game.sideToMove == .white)
+    }
+
+    @Test func opponentsWeakSettingDoesNotWeakenTheAnalysisAfterIt() async throws {
+        // The opponent and the eval bar share one Stockfish. After a weakened search,
+        // the next analysis must be at full strength again.
+        let engine = try await startedEngine()
+        let opponent = StockfishOpponent(engine: engine, rating: 1320)
+        _ = try await opponent.chooseMove(in: ChessGame())
+
+        // After 1. e4 d5 2. Qg4?? the bishop takes the queen. Full strength always sees it.
+        let analysis = try await engine.analyze(
+            fen: "rnbqkbnr/ppp1pppp/8/3p4/4P1Q1/8/PPPP1PPP/RNB1KBNR b KQkq - 1 2", depth: 12)
+        #expect(analysis.bestMove == "c8g4")
+    }
+
     /// A score as a number for comparisons, treating a mate as a huge advantage.
     private static func whitePointOfView(_ evaluation: Evaluation) -> Int {
         switch evaluation {

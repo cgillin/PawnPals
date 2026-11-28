@@ -9,8 +9,8 @@ import Foundation
 ///
 /// **Only one Stockfish can run per app.** ChessKitEngine talks to it through the app's
 /// own input and output streams, so a second one would steal the first one's answers.
-/// Anything that needs the engine (the eval bar now, the computer opponent later)
-/// shares this one, and its queue keeps them from talking over each other.
+/// Everything that needs the engine (the eval bar and the computer opponent) shares
+/// this one, and its queue keeps them from talking over each other.
 public actor StockfishEngine {
     private let connection = StockfishConnection()
     private var responses: AsyncStream<EngineResponse>.Iterator
@@ -127,9 +127,11 @@ public actor StockfishEngine {
     ///
     /// - parameter fen: the position to look at.
     /// - parameter depth: how many half-moves ahead to look. More is stronger and slower.
+    /// - parameter strength: how hard Stockfish tries. Analysis uses `.full`; the
+    ///   computer opponent asks for less.
     /// - parameter onRound: called with Stockfish's answer after each round of its search.
     public func analyze(
-        fen: String, depth: Int,
+        fen: String, depth: Int, strength: EngineStrength = .full,
         onRound: @escaping @Sendable (EngineAnalysis) -> Void = { _ in }
     ) async throws -> EngineAnalysis {
         guard isStarted else { throw EngineError.notStarted }
@@ -145,7 +147,8 @@ public actor StockfishEngine {
         // Stockfish off mid-sentence. Cancelling asks Stockfish to stop instead.
         let search = Task {
             try await self.search(
-                id: id, fen: game.fen, sideToMove: game.sideToMove, depth: depth, onRound: onRound)
+                id: id, fen: game.fen, sideToMove: game.sideToMove, depth: depth,
+                strength: strength, onRound: onRound)
         }
         let result = await withTaskCancellationHandler {
             await search.result
@@ -159,7 +162,7 @@ public actor StockfishEngine {
     // MARK: - One search
 
     private func search(
-        id: Int, fen: String, sideToMove: Side, depth: Int,
+        id: Int, fen: String, sideToMove: Side, depth: Int, strength: EngineStrength,
         onRound: @Sendable (EngineAnalysis) -> Void
     ) async throws -> EngineAnalysis {
         await waitForTurn()
@@ -170,6 +173,11 @@ public actor StockfishEngine {
         currentSearchID = id
         defer { currentSearchID = nil }
 
+        // Every search sets the strength it wants, so the last search's setting
+        // never carries over.
+        for command in Self.strengthCommands(for: strength) {
+            connection.send(command)
+        }
         connection.send(.position(fen: fen))
         connection.send(.go(depth: depth))
         let watchdog = startWatchdog(for: id)
@@ -213,15 +221,34 @@ public actor StockfishEngine {
             depth: deepest.depth)
     }
 
+    /// The UCI commands that set Stockfish's strength for the next search.
+    static func strengthCommands(for strength: EngineStrength) -> [StockfishConnection.Command] {
+        switch strength {
+        case .full:
+            return [.setoption(name: "UCI_LimitStrength", value: "false")]
+        case .limited(let rating):
+            let supported = min(
+                max(rating, EngineStrength.lowestRating), EngineStrength.highestRating)
+            return [
+                .setoption(name: "UCI_LimitStrength", value: "true"),
+                .setoption(name: "UCI_Elo", value: "\(supported)"),
+            ]
+        }
+    }
+
     /// Reads a score out of one of Stockfish's "info" lines, if it has an exact one.
     ///
     /// Stockfish ends every scored line with "pv" and its planned moves, after the score.
     /// A line cut short (see `StockfishConnection`) can lose the end of its score, like
     /// "cp 7" from "cp 735", so a line without "pv" isn't trusted. The one exception is
     /// depth 0, which Stockfish sends with no moves when the game is already over.
+    ///
+    /// At reduced strength, Stockfish quietly looks at its top four moves and reports
+    /// each one ("multipv 2", "multipv 3", …). Only the top line scores the position.
     static func engineScore(from info: EngineResponse.Info) -> EngineScore? {
         guard let score = info.score, score.lowerbound != true, score.upperbound != true,
-            info.pv?.isEmpty == false || info.depth == 0
+            info.pv?.isEmpty == false || info.depth == 0,
+            (info.multipv ?? 1) == 1
         else {
             return nil
         }

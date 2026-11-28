@@ -54,3 +54,8 @@ import Testing
     #expect(Evaluation(outcome: .draw(.stalemate)) == .centipawns(0))
     #expect(Evaluation(outcome: .draw(.repetition)) == .centipawns(0))
 }
+
+@Test func resignationIsNotScoredByTheRules() {
+    // Giving up doesn't change the position, so the engine still scores it.
+    #expect(Evaluation(outcome: .resigned(winner: .white)) == nil)
+}

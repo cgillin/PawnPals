@@ -15,6 +15,8 @@ public enum Side: Sendable {
 public enum GameOutcome: Equatable, Sendable {
     /// One side checkmated the other.
     case checkmate(winner: Side)
+    /// One side gave up, so the other side wins.
+    case resigned(winner: Side)
     /// Nobody won, for the given reason.
     case draw(DrawReason)
 
