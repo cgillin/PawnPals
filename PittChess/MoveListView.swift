@@ -66,7 +66,8 @@ struct MoveListView: View {
             MoveText(san: entry.san)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .foregroundStyle(isHighlighted ? .white : .primary)
+                // Black on the yellow accent: white text on yellow is hard to read.
+                .foregroundStyle(isHighlighted ? .black : .primary)
                 .background(
                     isHighlighted ? AnyShapeStyle(.tint) : AnyShapeStyle(.fill.tertiary),
                     in: .capsule
