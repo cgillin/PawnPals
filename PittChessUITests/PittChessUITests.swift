@@ -22,18 +22,22 @@ final class PittChessUITests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    /// Launches the app, checks the title and board appear, plays 1. e4 by tapping,
-    /// checks it shows in the move list, then takes it back with Undo.
+    /// Launches the app, starts a friend game from the home screen, plays 1. e4 by
+    /// tapping, checks it shows in the move list, then takes it back with Undo.
     @MainActor
     func testPlayingAndUndoingTheFirstMove() throws {
         let app = XCUIApplication()
         app.launch()
 
+        let playFriend = app.buttons["play-friend-button"]
         XCTAssertTrue(
-            app.staticTexts["Hello Chess ♞"].waitForExistence(timeout: 5),
-            "The welcome title should appear after launch."
+            playFriend.waitForExistence(timeout: 5),
+            "The home screen should appear after launch."
         )
+        playFriend.tap()
+
         let turnLabel = app.staticTexts["turn-label"]
+        XCTAssertTrue(turnLabel.waitForExistence(timeout: 5), "The game should open.")
         XCTAssertEqual(turnLabel.label, "White to move")
 
         // Tap the e2 pawn, then the e4 square.

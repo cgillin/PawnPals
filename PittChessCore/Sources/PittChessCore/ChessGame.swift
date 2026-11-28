@@ -12,6 +12,10 @@ public struct ChessGame: Sendable {
     /// Every move played so far, oldest first.
     private var history: [PlayedMove] = []
 
+    /// The player who gave up, if one did. ChessKit only knows the rules, and giving
+    /// up isn't a rule, so we keep track of it here.
+    private var resignedSide: Side?
+
     /// One move, written down, plus a copy of the board from just before it.
     ///
     /// Keeping the whole earlier board (not just the move) makes undo simple and exact:
@@ -49,7 +53,8 @@ public struct ChessGame: Sendable {
 
     /// How the game ended, or nil while it's still being played.
     public var outcome: GameOutcome? {
-        switch board.state {
+        if let resignedSide { return .resigned(winner: resignedSide.opponent) }
+        return switch board.state {
         case .checkmate(let loser): .checkmate(winner: Self.side(from: loser).opponent)
         case .draw(let reason): .draw(Self.drawReason(from: reason))
         case .active, .check, .promotion: nil
@@ -97,22 +102,35 @@ public struct ChessGame: Sendable {
         // For the latest move, it's the current board.
         if history.indices.contains(index + 1) {
             earlier.board = history[index + 1].boardBefore
+            // Nobody had resigned yet back then.
+            earlier.resignedSide = nil
         }
         return earlier
     }
 
-    /// True when there's a move to take back.
+    /// True when there's a move to take back. A resigned game can't be taken back.
     public var canUndo: Bool {
-        !history.isEmpty
+        !history.isEmpty && resignedSide == nil
     }
 
     /// Takes back the last move, putting the board exactly as it was before it.
     ///
-    /// - returns: `true` if a move was taken back, `false` if there were no moves.
+    /// - returns: `true` if a move was taken back, `false` if there were no moves
+    ///   or someone resigned.
     @discardableResult
     public mutating func undo() -> Bool {
-        guard let last = history.popLast() else { return false }
+        guard resignedSide == nil, let last = history.popLast() else { return false }
         board = last.boardBefore
+        return true
+    }
+
+    /// `side` gives up, and the other side wins. This ends the game for good.
+    ///
+    /// - returns: `true` if the game ended, `false` if it was already over.
+    @discardableResult
+    public mutating func resign(_ side: Side) -> Bool {
+        guard outcome == nil else { return false }
+        resignedSide = side
         return true
     }
 
@@ -142,6 +160,38 @@ public struct ChessGame: Sendable {
     ///   (in which case nothing changes).
     @discardableResult
     public mutating func move(from start: BoardSquare, to end: BoardSquare) -> Bool {
+        move(from: start, to: end, promotingTo: .queen)
+    }
+
+    /// Plays a move written the way engines write them: "e2e4", or "e7e8n" for a pawn
+    /// that becomes a knight. ChessKit still checks that it's legal.
+    ///
+    /// - returns: `true` if the move was made, `false` if it isn't a move or isn't
+    ///   legal (in which case nothing changes).
+    @discardableResult
+    public mutating func move(engineMove: String) -> Bool {
+        let characters = Array(engineMove)
+        guard characters.count == 4 || characters.count == 5,
+            let start = BoardSquare(name: String(characters[0...1])),
+            let end = BoardSquare(name: String(characters[2...3]))
+        else { return false }
+
+        var promotion = Piece.Kind.queen
+        if characters.count == 5 {
+            switch characters[4] {
+            case "q": promotion = .queen
+            case "r": promotion = .rook
+            case "b": promotion = .bishop
+            case "n": promotion = .knight
+            default: return false
+            }
+        }
+        return move(from: start, to: end, promotingTo: promotion)
+    }
+
+    private mutating func move(
+        from start: BoardSquare, to end: BoardSquare, promotingTo promotion: Piece.Kind
+    ) -> Bool {
         let boardBefore = board
         guard legalDestinations(from: start).contains(end),
             var chessKitMove = board.move(
@@ -149,7 +199,7 @@ public struct ChessGame: Sendable {
         else { return false }
 
         if case .promotion(let promotionMove) = board.state {
-            chessKitMove = board.completePromotion(of: promotionMove, to: .queen)
+            chessKitMove = board.completePromotion(of: promotionMove, to: promotion)
         }
         history.append(
             PlayedMove(

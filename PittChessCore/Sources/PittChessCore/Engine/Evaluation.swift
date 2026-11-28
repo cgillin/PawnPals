@@ -29,10 +29,13 @@ public enum Evaluation: Sendable, Equatable {
 
     /// The score of a finished game, straight from the rules: no engine needed.
     /// Checkmate is a win for the winner; any draw is level.
-    public init(outcome: GameOutcome) {
+    ///
+    /// Nil after a resignation: the rules don't score the position, so ask the engine.
+    public init?(outcome: GameOutcome) {
         switch outcome {
         case .checkmate(let winner): self = .mate(winner: winner, moves: 0)
         case .draw: self = .centipawns(0)
+        case .resigned: return nil
         }
     }
 }

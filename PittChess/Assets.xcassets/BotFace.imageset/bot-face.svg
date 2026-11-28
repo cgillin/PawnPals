@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">PittChess Bot</title>
+  <desc id="desc">A friendly metallic chess robot with gold eyes.</desc>
+  <defs>
+    <linearGradient id="shell" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset=".42" stop-color="#D9DDE2"/>
+      <stop offset="1" stop-color="#858B94"/>
+    </linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#242424"/>
+      <stop offset="1" stop-color="#080808"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFE36A"/>
+      <stop offset=".5" stop-color="#FFCC00"/>
+      <stop offset="1" stop-color="#D99B00"/>
+    </linearGradient>
+  </defs>
+  <!-- antenna -->
+  <path d="M128 37v20" fill="none" stroke="url(#shell)" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="128" cy="27" r="12" fill="url(#shell)"/>
+  <!-- side pods -->
+  <rect x="29" y="98" width="26" height="61" rx="12" fill="url(#shell)"/>
+  <rect x="201" y="98" width="26" height="61" rx="12" fill="url(#shell)"/>
+  <!-- outer head -->
+  <rect x="42" y="58" width="172" height="144" rx="48" fill="url(#shell)"/>
+  <path d="M62 76c18-14 114-14 132 0" fill="none" stroke="#FFFFFF" stroke-opacity=".8" stroke-width="7" stroke-linecap="round"/>
+  <!-- face -->
+  <rect x="57" y="75" width="142" height="111" rx="34" fill="url(#face)"/>
+  <circle cx="99" cy="123" r="11" fill="url(#gold)"/>
+  <circle cx="157" cy="123" r="11" fill="url(#gold)"/>
+  <path d="M111 151h34" stroke="url(#gold)" stroke-width="8" stroke-linecap="round"/>
+  <!-- subtle lower highlight -->
+  <path d="M80 194c23 10 73 10 96 0" fill="none" stroke="#FFFFFF" stroke-opacity=".32" stroke-width="5" stroke-linecap="round"/>
+</svg>
